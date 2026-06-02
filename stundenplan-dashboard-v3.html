@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stundenplan-Dashboard | KHS St. Benedikt</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+  --bg:      #f5f3ee;
+  --surface: #ffffff;
+  --surface2:#f0ede6;
+  --border:  #ddd9cf;
+  --ink:     #1a1814;
+  --muted:   #857f73;
+  --accent:  #c1440e;
+  --accent2: #2a6041;
+  --accent3: #1e3a6e;
+  --warn:    #d4860a;
+  --purple:  #5a3fb5;
+  --radius:  12px;
+  --shadow:  0 2px 12px rgba(0,0,0,0.07);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh; }
+
+header {
+  background: var(--ink); color: #f5f3ee;
+  padding: 22px 32px; display: flex; align-items: center; gap: 18px;
+  position: sticky; top: 0; z-index: 200;
+}
+.logo { font-family: 'DM Serif Display', serif; font-size: 1.35rem; line-height: 1.1; }
+.logo span { color: #e8b84b; font-style: italic; }
+header p { font-size: 0.76rem; color: #857f73; margin-top: 2px; }
+.header-actions { margin-left: auto; display: flex; gap: 9px; align-items: center; flex-wrap: wrap; }
+
+.btn { padding: 9px 16px; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.81rem; font-weight: 600; cursor: pointer; border: none; transition: all 0.18s; display: inline-flex; align-items: center; gap: 6px; }
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover { background: #a33509; }
+.btn-dark { background: #f5f3ee; color: var(--ink); }
+.btn-dark:hover { background: #e8e5de; }
+.btn-purple { background: var(--purple); color: white; }
+.btn-purple:hover { background: #4a32a0; }
+
+.setup-banner { background: #fff8e6; border: 1px solid #f0c040; border-left: 4px solid #e8b84b; border-radius: var(--radius); padding: 16px 20px; margin: 22px 28px; font-size: 0.86rem; line-height: 1.7; display: none; }
+.setup-banner.show { display: block; }
+.url-row { display: flex; gap: 9px; margin-top: 10px; }
+.url-row input { flex: 1; padding: 8px 13px; border: 1px solid var(--border); border-radius: 7px; font-size: 0.84rem; font-family: 'DM Sans', sans-serif; outline: none; }
+
+main { max-width: 1200px; margin: 0 auto; padding: 26px 22px 80px; }
+
+.main-tabs { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 28px; flex-wrap: wrap; }
+.main-tab { padding: 11px 20px; font-size: 0.85rem; font-weight: 600; cursor: pointer; color: var(--muted); border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.15s; }
+.main-tab:hover { color: var(--ink); }
+.main-tab.active { color: var(--ink); border-bottom-color: var(--ink); }
+
+.tab-content { display: none; }
+.tab-content.active { display: block; animation: fadeUp 0.25s ease; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+.stat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 13px; margin-bottom: 26px; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; box-shadow: var(--shadow); }
+.stat-label { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 7px; }
+.stat-value { font-family: 'DM Serif Display', serif; font-size: 2.2rem; line-height: 1; }
+.stat-sub { font-size: 0.76rem; color: var(--muted); margin-top: 5px; }
+.stat-bar { height: 4px; border-radius: 2px; background: var(--surface2); margin-top: 9px; overflow: hidden; }
+.stat-bar-fill { height: 100%; border-radius: 2px; transition: width 0.8s ease; }
+
+.sec-header { display: flex; align-items: baseline; gap: 11px; margin-bottom: 13px; margin-top: 30px; flex-wrap: wrap; }
+.sec-title { font-family: 'DM Serif Display', serif; font-size: 1.25rem; }
+.sec-sub { font-size: 0.78rem; color: var(--muted); }
+
+/* JAHRGANG SECTIONS */
+.jg-section { margin-bottom: 28px; }
+.jg-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 0; margin-bottom: 11px;
+  border-bottom: 2px solid var(--border);
+}
+.jg-title { font-family: 'DM Serif Display', serif; font-size: 1.1rem; }
+.jg-pill { padding: 3px 9px; border-radius: 5px; font-size: 0.7rem; font-weight: 700; background: var(--surface2); color: var(--muted); }
+.jg-sum { font-size: 0.76rem; color: var(--muted); margin-left: auto; }
+
+.klassen-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(195px,1fr)); gap: 10px; }
+
+.klasse-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 15px; box-shadow: var(--shadow); transition: transform 0.14s; }
+.klasse-card:hover { transform: translateY(-2px); }
+.klasse-name { font-family: 'DM Serif Display', serif; font-size: 1.1rem; margin-bottom: 8px; display: flex; align-items: center; gap: 7px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.stunden-row { display: flex; align-items: center; gap: 6px; font-size: 0.77rem; margin-bottom: 3px; }
+.stunden-row .fn { flex: 1; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stunden-row .lk { font-size: 0.66rem; font-weight: 600; background: var(--surface2); border-radius: 3px; padding: 1px 5px; }
+.stunden-row .sh { font-size: 0.68rem; color: var(--muted); background: var(--surface2); border-radius: 3px; padding: 1px 4px; }
+.offen-badge { display: inline-flex; align-items: center; gap: 3px; font-size: 0.68rem; font-weight: 600; padding: 2px 7px; border-radius: 5px; background: rgba(193,68,14,0.08); color: var(--accent); border: 1px solid rgba(193,68,14,0.2); }
+.ok-badge { display: inline-flex; align-items: center; gap: 3px; font-size: 0.68rem; font-weight: 600; padding: 2px 7px; border-radius: 5px; background: rgba(42,96,65,0.08); color: var(--accent2); border: 1px solid rgba(42,96,65,0.2); }
+
+.tag { display: inline-block; padding: 2px 7px; border-radius: 5px; font-size: 0.69rem; font-weight: 600; margin: 1px; }
+.tag-blue   { background: rgba(30,58,110,0.1);  color: var(--accent3); }
+.tag-green  { background: rgba(42,96,65,0.1);   color: var(--accent2); }
+.tag-red    { background: rgba(193,68,14,0.1);  color: var(--accent); }
+.tag-gold   { background: rgba(212,134,10,0.1); color: var(--warn); }
+.tag-purple { background: rgba(90,63,181,0.1);  color: var(--purple); }
+
+.kl-chip { display: inline-block; padding: 2px 8px; border-radius: 5px; font-size: 0.7rem; font-weight: 700; background: var(--ink); color: #f5f3ee; }
+
+.lk-table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+thead th { text-align: left; padding: 11px 15px; font-size: 0.68rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); background: var(--surface2); border-bottom: 1px solid var(--border); }
+tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; cursor: pointer; }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: var(--surface2); }
+tbody td { padding: 11px 15px; vertical-align: middle; }
+
+.dep-bar-wrap { display: flex; align-items: center; gap: 7px; }
+.dep-bar { flex: 1; height: 5px; border-radius: 3px; background: var(--surface2); overflow: hidden; min-width: 50px; }
+.dep-fill { height: 100%; border-radius: 3px; transition: width 0.8s; }
+.fill-ok   { background: var(--accent2); }
+.fill-warn { background: var(--warn); }
+.fill-over { background: var(--accent); }
+
+/* E-KURS */
+.ekurs-jahrgang { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 12px; }
+.ekurs-jg-header { display: flex; align-items: center; gap: 12px; padding: 13px 18px; background: var(--surface2); border-bottom: 1px solid var(--border); }
+.jg-label-big { font-family: 'DM Serif Display', serif; font-size: 1.1rem; }
+.jg-badge { padding: 3px 9px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; background: rgba(90,63,181,0.1); color: var(--purple); border: 1px solid rgba(90,63,181,0.2); }
+
+.ekurs-body { padding: 16px 18px; display: flex; flex-direction: column; gap: 16px; }
+.fach-group-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--purple); margin-bottom: 8px; }
+.ekurs-slots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px,1fr)); gap: 9px; }
+
+.ekurs-slot { border: 1px solid var(--border); border-radius: 9px; padding: 12px 14px; background: var(--bg); transition: border-color 0.15s; }
+.ekurs-slot:hover { border-color: var(--purple); }
+.ekurs-slot.assigned { border-color: var(--accent2); background: rgba(42,96,65,0.04); }
+.slot-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--purple); margin-bottom: 8px; }
+.slot-row { display: flex; gap: 7px; align-items: center; }
+.slot-select { flex: 1; padding: 7px 10px; border: 1px solid var(--border); border-radius: 7px; font-size: 0.82rem; font-family: 'DM Sans', sans-serif; background: var(--surface); color: var(--ink); outline: none; }
+.slot-select:focus { border-color: var(--purple); }
+.slot-std { width: 52px; padding: 7px 7px; border: 1px solid var(--border); border-radius: 7px; font-size: 0.82rem; font-family: 'DM Sans', sans-serif; background: var(--surface); color: var(--ink); outline: none; text-align: center; }
+.interesse-line { margin-top: 7px; font-size: 0.73rem; color: var(--muted); }
+.interesse-chip { display: inline-block; margin: 1px 2px; padding: 1px 6px; border-radius: 4px; background: rgba(90,63,181,0.08); color: var(--purple); border: 1px solid rgba(90,63,181,0.18); font-size: 0.68rem; font-weight: 600; }
+
+.offen-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px,1fr)); gap: 11px; }
+.offen-card { background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--accent); border-radius: var(--radius); padding: 13px 15px; box-shadow: var(--shadow); }
+.offen-fach-row { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--surface2); font-size: 0.8rem; }
+.offen-fach-row:last-child { border-bottom: none; }
+.offen-std { font-size: 0.69rem; font-weight: 600; color: var(--accent); background: rgba(193,68,14,0.07); border-radius: 4px; padding: 1px 5px; }
+
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 300; display: none; align-items: center; justify-content: center; padding: 18px; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--surface); border-radius: 14px; max-width: 540px; width: 100%; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); padding: 26px; animation: fadeUp 0.22s ease; }
+.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+.modal-title { font-family: 'DM Serif Display', serif; font-size: 1.3rem; }
+.modal-close { background: var(--surface2); border: none; width: 30px; height: 30px; border-radius: 7px; cursor: pointer; font-size: 0.95rem; color: var(--muted); display: flex; align-items: center; justify-content: center; }
+.modal-close:hover { background: var(--border); }
+.modal-sec { margin-bottom: 16px; }
+.modal-sec-label { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 7px; }
+
+.loader { display: flex; align-items: center; gap: 13px; padding: 40px; justify-content: center; color: var(--muted); font-size: 0.88rem; }
+.spinner { width: 26px; height: 26px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.toast { position: fixed; bottom: 22px; right: 22px; background: var(--ink); color: #f5f3ee; padding: 11px 18px; border-radius: 10px; font-size: 0.83rem; font-weight: 500; z-index: 999; transform: translateY(80px); transition: transform 0.3s ease; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+.toast.show { transform: translateY(0); }
+
+@media (max-width: 700px) {
+  .stat-grid { grid-template-columns: 1fr 1fr; }
+  header { padding: 14px 16px; }
+  main { padding: 14px 11px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">Stundenplan <span>Dashboard</span></div>
+    <p>KHS St. Benedikt — Schuljahr 2026/27</p>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-dark" onclick="toggleSetup()">⚙ Einrichtung</button>
+    <button class="btn btn-purple" onclick="saveEkursZuweisung()" id="btn-save-ekurs" style="display:none">💾 E-Kurs speichern</button>
+    <button class="btn btn-primary" onclick="loadData()">↻ Laden</button>
+  </div>
+</header>
+
+<div class="setup-banner show" id="setup-banner">
+  <strong>⚙ Google Apps Script URL</strong>
+  <div class="url-row">
+    <input type="text" id="script-url" placeholder="https://script.google.com/macros/s/…/exec" oninput="saveUrl(this.value)">
+    <button class="btn btn-primary" onclick="loadData()">Verbinden</button>
+  </div>
+</div>
+
+<main>
+  <div class="main-tabs">
+    <div class="main-tab active" onclick="switchTab('overview')">Übersicht</div>
+    <div class="main-tab" onclick="switchTab('lk')">Lehrkräfte</div>
+    <div class="main-tab" onclick="switchTab('ekurs')">⭐ E-Kurs-Zuweisung</div>
+    <div class="main-tab" onclick="switchTab('offen')">Offene Stunden</div>
+  </div>
+
+  <div class="tab-content active" id="tab-overview">
+    <div id="stat-cards"></div>
+    <div id="klassen-section"></div>
+  </div>
+  <div class="tab-content" id="tab-lk">
+    <div id="lk-section"></div>
+  </div>
+  <div class="tab-content" id="tab-ekurs">
+    <div style="margin-bottom:20px">
+      <div style="font-family:'DM Serif Display',serif;font-size:1.5rem;margin-bottom:6px">E-Kurs-Zuweisung</div>
+      <div style="font-size:0.84rem;color:var(--muted);line-height:1.6;max-width:680px">Weisen Sie Lehrkräfte für die <strong>Erweiterungskurse</strong> in Englisch und Mathematik zu. Jg. 7 &amp; 8: je 2 E-Kurse, Jg. 9: je 3 E-Kurse. Grün hinterlegt = bereits besetzt.</div>
+    </div>
+    <div id="ekurs-content"></div>
+  </div>
+  <div class="tab-content" id="tab-offen">
+    <div id="offen-section"></div>
+  </div>
+</main>
+
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title"></div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div class="modal-overlay" id="delete-overlay" onclick="closeDeleteModal()">
+  <div class="modal" style="max-width:420px" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title" style="color:var(--accent)">Eintrag löschen?</div>
+      <button class="modal-close" onclick="closeDeleteModal()">✕</button>
+    </div>
+    <div style="font-size:0.88rem;color:var(--muted);line-height:1.6;margin-bottom:20px;">
+      Möchten Sie den Eintrag von <strong id="del-name" style="color:var(--ink)"></strong> wirklich entfernen?
+      <br><br>
+      <span style="font-size:0.8rem;">Der Eintrag wird aus der Dashboard-Ansicht entfernt. Falls ein Google Sheet verbunden ist, wird die Zeile dort ebenfalls gelöscht.</span>
+    </div>
+    <input type="hidden" id="del-idx">
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-outline" onclick="closeDeleteModal()">Abbrechen</button>
+      <button class="btn btn-primary" onclick="executeDelete()">🗑 Ja, löschen</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────────────
+let SCRIPT_URL = localStorage.getItem('stundenplan_url') || '';
+if (SCRIPT_URL) {
+  document.getElementById('script-url').value = SCRIPT_URL;
+  document.getElementById('setup-banner').classList.remove('show');
+}
+function saveUrl(v) { SCRIPT_URL = v.trim(); localStorage.setItem('stundenplan_url', SCRIPT_URL); }
+function toggleSetup() { document.getElementById('setup-banner').classList.toggle('show'); }
+
+// ── KLASSENSTRUKTUR ─────────────────────────────────────────────
+const KLASSEN_STRUKTUR = [
+  { jg: 5,  klassen: ['5a','5b'],              label: 'Jahrgang 5', kurssystem: false },
+  { jg: 6,  klassen: ['6a','6b'],              label: 'Jahrgang 6', kurssystem: false },
+  { jg: 7,  klassen: ['7a','7b','7c'],         label: 'Jahrgang 7', kurssystem: true  },
+  { jg: 8,  klassen: ['8a','8b','8c'],         label: 'Jahrgang 8', kurssystem: true  },
+  { jg: 9,  klassen: ['9a','9b','9c'],         label: 'Jahrgang 9', kurssystem: true  },
+  { jg: 10, klassen: ['10A1','10A2','10B'],    label: 'Jahrgang 10', kurssystem: false },
+];
+
+const ALLE_KLASSEN = KLASSEN_STRUKTUR.flatMap(j => j.klassen);
+
+// ── STUNDENTAFEL ────────────────────────────────────────────────
+const STUNDENTAFEL_5   = {D:4,E:3,M:3,Mu:1,Ku:1,EK:1,GP:1,KR:1,Bio:1,IF:1,Sw:2,VD:2,VM:1,Sol:1,KL:1};
+const STUNDENTAFEL_6   = {D:4,E:3,M:3,Mu:1,Ku:1,EK:1,GP:1,KR:1,Bio:1,IF:1,Phy:1,Sp:2,VD:1,VM:1,KL:1};
+const STUNDENTAFEL_7   = {D:3,EG:3,MG:3,Ku:2,EK:2,GP:1,KR:1,Bio:2,Sp:2,VM:1,VD:1,KL:1};
+const STUNDENTAFEL_8   = {D:3,EG:3,MG:3,Ku:1,EK:1,GP:1,KR:1,Bio:1,AW:1,Phy:1,Ch:1,Sp:1,AT:2,AH:2,VM:1,KL:1};
+const STUNDENTAFEL_9   = {D:3,EG:3,MG:3,Ku:1,EK:1,GP:1,KR:1,Bio:1,Phy:1,Ch:1,AW:2,Sp:1,AT:2,AH:2,KL:1};
+const STUNDENTAFEL_10A1= {D:3,EG:3,EE:3,MG:3,ME:3,Ku:1,EK:1,GP:1,KR:1,Bio:1,Phy:1,Ch:1,AW:1,Sp:2,AT:2,AH:2,KL:1};
+const STUNDENTAFEL_10A2= {D:3,EG:3,EE:3,MG:3,ME:3,Ku:1,EK:1,GP:1,KR:1,Bio:1,Phy:1,Ch:1,AW:1,Sp:2,AT:2,AH:2,KL:1};
+const STUNDENTAFEL_10B = {D:3,EG:3,EE:3,MG:3,ME:3,Ku:1,EK:1,GP:1,KR:1,Bio:1,Phy:1,Ch:1,AW:1,EBE:1,Sp:2,AT:2,AH:2,KL:1};
+
+const STUNDENTAFEL = {
+  '5a':  STUNDENTAFEL_5, '5b':  STUNDENTAFEL_5,
+  '6a':  STUNDENTAFEL_6,
+  '6b':  STUNDENTAFEL_6,
+  '7a':  STUNDENTAFEL_7, '7b':  STUNDENTAFEL_7, '7c':  STUNDENTAFEL_7,
+  '8a':  STUNDENTAFEL_8, '8b':  STUNDENTAFEL_8, '8c':  STUNDENTAFEL_8,
+  '9a':  STUNDENTAFEL_9, '9b':  STUNDENTAFEL_9, '9c':  STUNDENTAFEL_9,
+  '10A1':STUNDENTAFEL_10A1, '10A2':STUNDENTAFEL_10A2, '10B': STUNDENTAFEL_10B,
+};
+
+const FACH_NAMEN = {
+  D:'Deutsch', E:'Englisch', M:'Mathematik',
+  EG:'Englisch G-Kurs', EE:'Englisch E-Kurs',
+  MG:'Mathe G-Kurs', ME:'Mathe E-Kurs',
+  Mu:'Musik', Ku:'Kunst', EK:'Erdkunde', GP:'Geschichte/Politik',
+  KR:'Kath. Religion', Bio:'Biologie', IF:'Informatik',
+  Phy:'Physik', Ch:'Chemie', Sp:'Sport', Sw:'Schwimmen',
+  AW:'Arbeit-Wirtschaft', AT:'Arbeit-Technik', AH:'Arbeit-Hauswirtschaft',
+  VD:'Vertiefung D', VM:'Vertiefung M', Sol:'Soziales Lernen',
+  KL:'Klassenlehrerstunde', EBE:'Erw. Berufsfeld'
+};
+
+// E-Kurs Slots pro Jahrgang
+const EKURS_SLOTS = {
+  7: { E:['E-Kurs 1','E-Kurs 2'],        M:['E-Kurs 1','E-Kurs 2'] },
+  8: { E:['E-Kurs 1','E-Kurs 2'],        M:['E-Kurs 1','E-Kurs 2'] },
+  9: { E:['E-Kurs 1','E-Kurs 2','E-Kurs 3'], M:['E-Kurs 1','E-Kurs 2','E-Kurs 3'] },
+};
+
+let ALL_DATA = [];
+let EKURS_ZUWEISUNG = JSON.parse(localStorage.getItem('ekurs_zuweisung')||'{}');
+
+// ── DEMO DATA ────────────────────────────────────────────────────
+const DEMO = [];
+
+// ── TABS ─────────────────────────────────────────────────────────
+function switchTab(name) {
+  const names = ['overview','lk','ekurs','offen'];
+  document.querySelectorAll('.main-tab').forEach((t,i) => t.classList.toggle('active', names[i]===name));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  document.getElementById('btn-save-ekurs').style.display = name==='ekurs'?'':'none';
+}
+
+// ── LOAD ─────────────────────────────────────────────────────────
+async function loadData() {
+  ['stat-cards','klassen-section','lk-section','ekurs-content','offen-section'].forEach(id => {
+    document.getElementById(id).innerHTML = `<div class="loader"><div class="spinner"></div>Lade…</div>`;
+  });
+
+  if (!SCRIPT_URL) {
+    document.getElementById('main-content') && (document.getElementById('main-content').innerHTML = '');
+    ['stat-cards','klassen-section','lk-section','ekurs-content','offen-section'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = `<div class="empty"><div class="empty-icon">🔗</div><h3>Keine Verbindung</h3><p>Bitte zuerst die Google Apps Script URL unter „⚙ Einrichtung" eintragen.</p></div>`;
+    });
+    return;
+  }
+  try {
+    const res  = await fetch(SCRIPT_URL+'?t='+Date.now());
+    const json = await res.json();
+    ALL_DATA = (json.data||[]).map(r => {
+      // Versuche _parsed, dann direkt die Rohdaten-Spalte parsen
+      if (r['_parsed']?.person) return r['_parsed'];
+      const raw = r['Rohdaten (JSON)'];
+      if (raw) {
+        try { const p = JSON.parse(raw); if (p?.person) return p; } catch(e) {}
+      }
+      // Fallback: direkt aus Spalten zusammenbauen
+      if (r['Nachname']) {
+        return {
+          person: {
+            nachname: r['Nachname'], vorname: r['Vorname'],
+            kuerzel: r['Kürzel'], deputat: r['Deputat'],
+            umfang: r['Umfang'], klassenleitung: r['Klassenleitung'],
+          },
+          unterricht: {
+            fortfuehrung: (() => { try { return JSON.parse(r['Fortführung (JSON)']||'[]'); } catch(e){ return []; } })(),
+            neu:          (() => { try { return JSON.parse(r['Neu (JSON)']||'[]'); } catch(e){ return []; } })(),
+            ekursInteresse: [], qualifikationen: (r['Qualifikationen']||'').split(', ').filter(Boolean),
+          },
+          zeiten: { einschraenkungen: r['Einschränkungen']||'' },
+          extras: { anmerkungen: r['Anmerkungen']||'', ermaessigungen: [] },
+        };
+      }
+      return null;
+    }).filter(d => d?.person);
+    if (!ALL_DATA.length) {
+      ['stat-cards','klassen-section','lk-section','ekurs-content','offen-section'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = `<div class="empty"><div class="empty-icon">📭</div><h3>Noch keine Rückmeldungen</h3><p>Das Formular wurde noch nicht ausgefüllt.</p></div>`;
+      });
+      return;
+    }
+    document.getElementById('setup-banner').classList.remove('show');
+    showToast(`${ALL_DATA.length} Einträge geladen`);
+  } catch(e) {
+    showToast('Verbindungsfehler – bitte erneut versuchen');
+    return;
+  }
+  renderAll();
+}
+
+function renderAll() { renderStats(); renderKlassen(); renderLK(); renderEkurs(); renderOffen(); }
+
+// ── CALC ─────────────────────────────────────────────────────────
+function getAbbrFromFachString(fachStr) {
+  const m = fachStr?.match(/\(([^)]+)\)/);
+  return m ? m[1] : (fachStr||'').substring(0,4);
+}
+
+function calcKlassen() {
+  const zuordnung = {};
+  ALLE_KLASSEN.forEach(kl => zuordnung[kl] = []);
+
+  ALL_DATA.forEach(d => {
+    const kuerzel = d.person?.kuerzel || '?';
+    const rows = [...(d.unterricht?.fortfuehrung||[]),...(d.unterricht?.neu||[])];
+    rows.forEach(r => {
+      if (!r.klasse || !r.fach || !zuordnung[r.klasse]) return;
+      const abbr = getAbbrFromFachString(r.fach);
+      zuordnung[r.klasse].push({ fach:abbr, std:parseInt(r.stunden)||0, kuerzel });
+    });
+  });
+
+  const klassenStatus = {};
+  const offeneStunden = {};
+
+  ALLE_KLASSEN.forEach(kl => {
+    const tafel = STUNDENTAFEL[kl] || {};
+    const zugeordnet = zuordnung[kl] || [];
+    const total = Object.values(tafel).reduce((s,v)=>s+v,0);
+    const vergebenMap = {};
+    zugeordnet.forEach(r => vergebenMap[r.fach] = (vergebenMap[r.fach]||0)+r.std);
+    const offen = {};
+    Object.entries(tafel).forEach(([f,std]) => { const r = std-(vergebenMap[f]||0); if(r>0) offen[f]=r; });
+    klassenStatus[kl] = {
+      total, vergeben: Math.min(total, zugeordnet.reduce((s,r)=>s+r.std,0)),
+      offen: Object.values(offen).reduce((s,v)=>s+v,0), rows: zugeordnet
+    };
+    offeneStunden[kl] = offen;
+  });
+
+  return { klassenStatus, offeneStunden };
+}
+
+function countOffeneEkursSlots() {
+  let n = 0;
+  Object.entries(EKURS_SLOTS).forEach(([jg,faecher]) =>
+    Object.entries(faecher).forEach(([,slots]) =>
+      slots.forEach(slot => { if (!EKURS_ZUWEISUNG[`${jg}_E_${slot}`]?.lk && !EKURS_ZUWEISUNG[`${jg}_M_${slot}`]?.lk) n++; })
+    )
+  );
+  return Object.entries(EKURS_SLOTS).reduce((total,[jg,faecher]) =>
+    total + Object.entries(faecher).reduce((s,[fach,slots]) =>
+      s + slots.filter(slot => !EKURS_ZUWEISUNG[`${jg}_${fach}_${slot}`]?.lk).length, 0), 0);
+}
+
+// ── STATS ─────────────────────────────────────────────────────────
+function renderStats() {
+  const { klassenStatus } = calcKlassen();
+  const totalVergeben = Object.values(klassenStatus).reduce((s,k)=>s+k.vergeben,0);
+  const totalOffen    = Object.values(klassenStatus).reduce((s,k)=>s+k.offen,0);
+  const mitLuecken    = Object.values(klassenStatus).filter(k=>k.offen>0).length;
+  const ekursOffen    = countOffeneEkursSlots();
+  const total         = totalVergeben + totalOffen || 1;
+
+  document.getElementById('stat-cards').innerHTML = `
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">Rückmeldungen</div>
+        <div class="stat-value">${ALL_DATA.length}</div>
+        <div class="stat-sub">Lehrkräfte</div>
+        <div class="stat-bar"><div class="stat-bar-fill" style="width:65%;background:var(--accent3)"></div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Vergebene Stunden</div>
+        <div class="stat-value">${totalVergeben}</div>
+        <div class="stat-sub">von ${totalVergeben+totalOffen} gesamt</div>
+        <div class="stat-bar"><div class="stat-bar-fill" style="width:${Math.round(totalVergeben/total*100)}%;background:var(--accent2)"></div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Offene Stunden</div>
+        <div class="stat-value" style="color:var(--accent)">${totalOffen}</div>
+        <div class="stat-sub">${mitLuecken} Klassen betroffen</div>
+        <div class="stat-bar"><div class="stat-bar-fill" style="width:${Math.round(totalOffen/total*100)}%;background:var(--accent)"></div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">E-Kurs-Slots offen</div>
+        <div class="stat-value" style="color:var(--purple)">${ekursOffen}</div>
+        <div class="stat-sub">noch nicht besetzt</div>
+        <div class="stat-bar"><div class="stat-bar-fill" style="width:${ekursOffen>0?Math.min(100,ekursOffen*10):0}%;background:var(--purple)"></div></div>
+      </div>
+    </div>`;
+}
+
+// ── KLASSEN ───────────────────────────────────────────────────────
+function renderKlassen() {
+  const { klassenStatus } = calcKlassen();
+  let html = '';
+
+  KLASSEN_STRUKTUR.forEach(({ jg, klassen, label, kurssystem }) => {
+    const jgVergeben = klassen.reduce((s,kl)=>s+(klassenStatus[kl]?.vergeben||0),0);
+    const jgTotal    = klassen.reduce((s,kl)=>s+(klassenStatus[kl]?.total||0),0);
+    const jgOffen    = klassen.reduce((s,kl)=>s+(klassenStatus[kl]?.offen||0),0);
+
+    html += `<div class="jg-section">
+      <div class="jg-header">
+        <div class="jg-title">${label}</div>
+        ${kurssystem?'<span class="jg-pill">Kurssystem E/M</span>':''}
+        <div class="jg-sum">${jgVergeben}/${jgTotal} Std. · ${jgOffen>0?`<span style="color:var(--accent)">${jgOffen} offen</span>`:'<span style="color:var(--accent2)">vollständig</span>'}</div>
+      </div>
+      <div class="klassen-row">
+        ${klassen.map(kl => {
+          const info = klassenStatus[kl]||{total:0,vergeben:0,offen:0,rows:[]};
+          const pct  = info.total>0?Math.round(info.vergeben/info.total*100):0;
+          const col  = pct===100?'var(--accent2)':pct>=70?'var(--warn)':'var(--accent)';
+          return `<div class="klasse-card">
+            <div class="klasse-name"><div class="dot" style="background:${col}"></div>Klasse ${kl}</div>
+            <div style="font-size:0.69rem;color:var(--muted);margin-bottom:6px">${info.vergeben}/${info.total} Std. (${pct}%)</div>
+            <div style="height:3px;border-radius:2px;background:var(--surface2);margin-bottom:9px;overflow:hidden">
+              <div style="height:100%;width:${pct}%;border-radius:2px;background:${col};transition:width 0.8s"></div>
+            </div>
+            ${info.rows.slice(0,4).map(r=>`<div class="stunden-row">
+              <span class="fn">${FACH_NAMEN[r.fach]||r.fach}</span>
+              <span class="lk">${r.kuerzel}</span>
+              <span class="sh">${r.std}h</span>
+            </div>`).join('')}
+            ${info.rows.length>4?`<div style="font-size:0.68rem;color:var(--muted);margin-top:2px">+${info.rows.length-4} weitere</div>`:''}
+            <div style="margin-top:8px">
+              ${info.offen>0?`<span class="offen-badge">⚠ ${info.offen} Std. offen</span>`:`<span class="ok-badge">✓ Vollständig</span>`}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  });
+
+  document.getElementById('klassen-section').innerHTML = `
+    <div class="sec-header"><div class="sec-title">Alle Klassen</div><div class="sec-sub">${ALLE_KLASSEN.length} Klassen · ${KLASSEN_STRUKTUR.length} Jahrgänge</div></div>
+    ${html}`;
+}
+
+// ── LK TABLE ──────────────────────────────────────────────────────
+function renderLK() {
+  const rows = ALL_DATA.map((d,i) => {
+    const p = d.person||{};
+    const u = d.unterricht||{};
+    const allRows = [...(u.fortfuehrung||[]),...(u.neu||[])];
+    const vergeben = allRows.reduce((s,r)=>s+(parseInt(r.stunden)||0),0);
+    const dep = parseInt(p.deputat)||28;
+    const pct = Math.min(100,vergeben/dep*100);
+    const fillCls = pct>100?'fill-over':pct>=75?'fill-ok':'fill-warn';
+    const ekurs = (u.ekursInteresse||[]).filter(e=>!e.includes('Kein'));
+    return `<tr onclick="showModal(${i})" style="cursor:pointer">
+      <td><span class="kl-chip">${p.kuerzel||'?'}</span></td>
+      <td><strong>${p.nachname||''}</strong>, ${p.vorname||''}</td>
+      <td>${p.klassenleitung&&p.klassenleitung!=='Keine'?`<span class="tag tag-gold">${p.klassenleitung}</span>`:'<span style="color:var(--muted);font-size:0.78rem">—</span>'}</td>
+      <td><div class="dep-bar-wrap"><div class="dep-bar"><div class="dep-fill ${fillCls}" style="width:${pct}%"></div></div><span style="font-size:0.74rem;color:var(--muted)">${dep} Std.</span></div></td>
+      <td><strong>${vergeben}</strong><span style="color:var(--muted);font-size:0.77rem"> / ${dep}</span></td>
+      <td>${ekurs.length?ekurs.map(e=>`<span class="tag tag-purple" style="font-size:0.63rem">${e.replace('E-Kurs ','').replace(' Jg.',' J.')}</span>`).join(''):'<span style="color:var(--muted);font-size:0.77rem">—</span>'}</td>
+      <td onclick="event.stopPropagation()">
+        <button onclick="confirmDelete(${i})" title="Eintrag löschen"
+          style="background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:0.9rem;display:flex;align-items:center;justify-content:center;transition:all 0.15s;"
+          onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
+          onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('lk-section').innerHTML = `
+    <div class="sec-header"><div class="sec-title">Lehrkräfte</div><div class="sec-sub">${ALL_DATA.length} Rückmeldungen</div></div>
+    <div class="lk-table-wrap">
+      <table>
+        <thead><tr><th>Kürzel</th><th>Name</th><th>KL</th><th>Deputat</th><th>Vergeben</th><th>E-Kurs-Interesse</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+// ── E-KURS ────────────────────────────────────────────────────────
+function getEkursInteressenten(jg, fach) {
+  const label = fach==='E'?'Englisch':'Mathematik';
+  return ALL_DATA.filter(d=>(d.unterricht?.ekursInteresse||[]).some(e=>e.includes(label)&&e.includes(`Jg. ${jg}`)));
+}
+
+function renderEkurs() {
+  let html = '';
+  Object.entries(EKURS_SLOTS).forEach(([jg, faecher]) => {
+    const fachGroups = Object.entries(faecher).map(([fach, slots]) => {
+      const label = fach==='E'?'Englisch E-Kurs':'Mathematik E-Kurs';
+      const interessenten = getEkursInteressenten(parseInt(jg), fach);
+      const slotsHtml = slots.map(slot => {
+        const key  = `${jg}_${fach}_${slot}`;
+        const zugewiesen = EKURS_ZUWEISUNG[key]||{};
+        const optionen = ALL_DATA.map(d=>`<option value="${d.person?.kuerzel||''}" ${zugewiesen.lk===d.person?.kuerzel?'selected':''}>${d.person?.nachname||''}, ${d.person?.vorname||''} (${d.person?.kuerzel||'?'})</option>`).join('');
+        return `<div class="ekurs-slot ${zugewiesen.lk?'assigned':''}" id="slot-${key}">
+          <div class="slot-label">${slot}</div>
+          <div class="slot-row">
+            <select class="slot-select" id="lk-${key}" onchange="updateEkurs('${key}',this.value,document.getElementById('std-${key}').value)">
+              <option value="">— Lehrkraft wählen —</option>${optionen}
+            </select>
+            <input type="number" class="slot-std" id="std-${key}" value="${zugewiesen.std||3}" min="1" max="6" title="Std./Woche"
+              onchange="updateEkurs('${key}',document.getElementById('lk-${key}').value,this.value)">
+          </div>
+          ${interessenten.length?`<div class="interesse-line">Interesse: ${interessenten.map(d=>`<span class="interesse-chip">${d.person?.kuerzel}</span>`).join('')}</div>`:''}
+        </div>`;
+      }).join('');
+      return `<div>
+        <div class="fach-group-label">${label}</div>
+        <div class="ekurs-slots-grid">${slotsHtml}</div>
+      </div>`;
+    }).join('<div style="height:1px;background:var(--border);margin:14px 0"></div>');
+
+    html += `<div class="ekurs-jahrgang">
+      <div class="ekurs-jg-header">
+        <div class="jg-label-big">Jahrgang ${jg}</div>
+        <span class="jg-badge">${Object.values(EKURS_SLOTS[jg]).flat().length} Slots</span>
+        <span style="font-size:0.76rem;color:var(--muted)">je 3 Std./Woche</span>
+      </div>
+      <div class="ekurs-body">${fachGroups}</div>
+    </div>`;
+  });
+  document.getElementById('ekurs-content').innerHTML = html;
+}
+
+function updateEkurs(key, lk, std) {
+  EKURS_ZUWEISUNG[key] = {lk, std:parseInt(std)||3};
+  document.getElementById('slot-'+key)?.classList.toggle('assigned', !!lk);
+}
+
+function saveEkursZuweisung() {
+  localStorage.setItem('ekurs_zuweisung', JSON.stringify(EKURS_ZUWEISUNG));
+  showToast('E-Kurs-Zuweisung gespeichert ✓');
+  renderStats();
+}
+
+// ── OFFEN ─────────────────────────────────────────────────────────
+function renderOffen() {
+  const { offeneStunden } = calcKlassen();
+  const hatOffen = Object.values(offeneStunden).some(f=>Object.keys(f).length>0);
+  if (!hatOffen) {
+    document.getElementById('offen-section').innerHTML = `<div style="margin-top:20px;padding:20px;background:rgba(42,96,65,0.07);border:1px solid rgba(42,96,65,0.2);border-radius:12px;color:var(--accent2);font-weight:500;text-align:center">✓ Alle Unterrichtsstunden vergeben!</div>`;
+    return;
+  }
+  const cards = ALLE_KLASSEN.filter(kl=>Object.keys(offeneStunden[kl]||{}).length>0).map(kl=>`
+    <div class="offen-card">
+      <div style="font-family:'DM Serif Display',serif;font-size:1.05rem;margin-bottom:9px">Klasse ${kl}</div>
+      ${Object.entries(offeneStunden[kl]).map(([f,std])=>`
+        <div class="offen-fach-row">
+          <span>${FACH_NAMEN[f]||f} <span style="font-size:0.68rem;color:var(--muted)">(${f})</span></span>
+          <span class="offen-std">${std} Std.</span>
+        </div>`).join('')}
+    </div>`).join('');
+
+  document.getElementById('offen-section').innerHTML = `
+    <div class="sec-header"><div class="sec-title" style="color:var(--accent)">⚠ Offene Stunden</div></div>
+    <div class="offen-grid">${cards}</div>`;
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────
+function showModal(idx) {
+  const d = ALL_DATA[idx];
+  const p = d.person||{};
+  const u = d.unterricht||{};
+  const z = d.zeiten||{};
+  const x = d.extras||{};
+  const allRows = [...(u.fortfuehrung||[]),...(u.neu||[])];
+  const ekursInt = (u.ekursInteresse||[]).filter(e=>!e.includes('Kein'));
+  document.getElementById('modal-title').textContent = `${p.vorname} ${p.nachname} (${p.kuerzel||'?'})`;
+  document.getElementById('modal-body').innerHTML = `
+    <div class="modal-sec">
+      <div class="modal-sec-label">Beschäftigung</div>
+      <div style="font-size:0.86rem">${p.umfang||'—'} · ${p.deputat||'?'} Std./Woche${p.klassenleitung&&p.klassenleitung!=='Keine'?` · <strong>KL: ${p.klassenleitung}</strong>`:''}</div>
+    </div>
+    <div class="modal-sec">
+      <div class="modal-sec-label">Unterricht (${allRows.length})</div>
+      ${allRows.map(r=>`<div style="display:flex;gap:7px;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:0.82rem">
+        <span style="flex:1">${r.fach}</span>
+        <span class="tag tag-gold">${r.klasse}</span>
+        <span class="tag tag-blue">${r.stunden||'?'} Std.</span>
+      </div>`).join('')}
+    </div>
+    ${u.wp?.interesse ? `<div class="modal-sec">
+      <div class="modal-sec-label">Wahlpflichtunterricht (WP)</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:0.84rem;align-items:center;">
+        <span class="tag tag-green">Interesse: Ja</span>
+        ${(u.wp.jahrgaenge||[]).map(j=>`<span class="tag tag-gold">${j}</span>`).join('')}
+        ${u.wp.fach?`<span style="color:var(--muted)">${u.wp.fach}</span>`:''}
+      </div>
+    </div>` : ''}
+    ${ekursInt.length?`<div class="modal-sec"><div class="modal-sec-label">E-Kurs-Interesse</div><div>${ekursInt.map(e=>`<span class="tag tag-purple">${e}</span>`).join('')}</div></div>`:''}
+    ${(x.ermaessigungen||[]).length?`<div class="modal-sec">
+      <div class="modal-sec-label">Ermäßigungsstunden</div>
+      <table style="width:100%;border-collapse:collapse;font-size:0.82rem">
+        ${(x.ermaessigungen||[]).map(e=>`<tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:5px 0">${e.grund||'—'}</td>
+          <td style="padding:5px 8px;text-align:right;font-weight:600;color:var(--warn);white-space:nowrap">${e.stunden} Std./Wo.</td>
+        </tr>`).join('')}
+        <tr><td style="padding:6px 0;font-weight:600;font-size:0.83rem">Gesamt Ermäßigung</td>
+          <td style="padding:6px 8px;text-align:right;font-weight:700;color:var(--accent)">
+            ${(x.ermaessigungen||[]).reduce((s,e)=>s+(parseFloat(e.stunden)||0),0)} Std./Wo.
+          </td>
+        </tr>
+      </table>
+    </div>`:''}
+    ${z.einschraenkungen?`<div class="modal-sec"><div class="modal-sec-label">Einschränkungen</div><div style="font-size:0.82rem;color:var(--muted)">${z.einschraenkungen}</div></div>`:''}
+    ${x.anmerkungen?`<div class="modal-sec"><div class="modal-sec-label">Anmerkungen</div><div style="font-size:0.82rem;color:var(--muted)">${x.anmerkungen}</div></div>`:''}
+  `;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function confirmDelete(idx) {
+  const d = ALL_DATA[idx];
+  const name = `${d.person?.vorname||''} ${d.person?.nachname||''} (${d.person?.kuerzel||'?'})`;
+  
+  // Bestätigungs-Dialog einblenden
+  document.getElementById('del-name').textContent = name;
+  document.getElementById('del-idx').value = idx;
+  document.getElementById('delete-overlay').classList.add('open');
+}
+
+async function executeDelete() {
+  const idx     = parseInt(document.getElementById('del-idx').value);
+  const d       = ALL_DATA[idx];
+  const kuerzel = d.person?.kuerzel || '';
+  const name    = `${d.person?.vorname||''} ${d.person?.nachname||''}`;
+
+  document.getElementById('delete-overlay').classList.remove('open');
+
+  // Zuerst aus Sheet löschen, dann lokal entfernen
+  if (SCRIPT_URL && kuerzel) {
+    showToast('Wird gelöscht…');
+    try {
+      const res  = await fetch(SCRIPT_URL + '?action=delete&kuerzel=' + encodeURIComponent(kuerzel) + '&t=' + Date.now());
+      const json = await res.json();
+      if (json.success) {
+        ALL_DATA.splice(idx, 1);
+        showToast(`✓ ${name} gelöscht`);
+        renderAll();
+      } else {
+        showToast('Fehler: ' + (json.error || 'Unbekannt'));
+      }
+    } catch(e) {
+      // Fallback: lokal löschen auch wenn Sheet-Request fehlschlägt
+      ALL_DATA.splice(idx, 1);
+      showToast(`⚠ Lokal entfernt – Sheet-Löschung prüfen`);
+      renderAll();
+    }
+  } else {
+    // Kein Script – nur lokal
+    ALL_DATA.splice(idx, 1);
+    showToast(`${name} lokal entfernt`);
+    renderAll();
+  }
+}
+
+function closeDeleteModal() {
+  document.getElementById('delete-overlay').classList.remove('open');
+}
+
+function closeModal(e) {
+  if (!e||e.target===document.getElementById('modal-overlay')) document.getElementById('modal-overlay').classList.remove('open');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2600);
+}
+
+loadData();
+</script>
+</body>
+</html>
