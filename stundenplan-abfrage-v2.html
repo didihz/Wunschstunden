@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stundenplan-Abfrage | KHS St. Benedikt</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Sans+3:wght@300;400;600&display=swap');
+
+:root {
+  --bg: #0f1117;
+  --card: #181c27;
+  --card2: #1e2333;
+  --border: #2a3050;
+  --accent: #e8b84b;
+  --accent2: #4b7be8;
+  --text: #e8eaf0;
+  --muted: #7a85a3;
+  --danger: #e84b4b;
+  --success: #4be88a;
+  --radius: 14px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Source Sans 3', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 80px; }
+
+header {
+  background: linear-gradient(135deg, #181c27 0%, #0f1117 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 24px 32px;
+  position: sticky; top: 0; z-index: 100;
+  display: flex; align-items: center; gap: 20px;
+}
+.header-icon { width: 44px; height: 44px; background: var(--accent); border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+header h1 { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 700; }
+header p { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+.header-right { margin-left: auto; }
+
+/* PROGRESS */
+.progress-wrap { background: var(--card); border-bottom: 1px solid var(--border); padding: 0 32px; }
+.progress-steps { display: flex; max-width: 860px; margin: 0 auto; }
+.step { flex: 1; padding: 13px 8px 11px; font-size: 0.74rem; color: var(--muted); border-bottom: 3px solid transparent; cursor: pointer; transition: all 0.2s; text-align: center; }
+.step.active { color: var(--accent); border-bottom-color: var(--accent); }
+.step.done { color: var(--success); border-bottom-color: var(--success); }
+.step-num { display: inline-flex; width: 19px; height: 19px; background: var(--border); border-radius: 50%; align-items: center; justify-content: center; font-size: 0.63rem; margin-right: 5px; vertical-align: middle; font-weight: 600; }
+.step.active .step-num { background: var(--accent); color: #000; }
+.step.done .step-num { background: var(--success); color: #000; }
+
+main { max-width: 860px; margin: 30px auto; padding: 0 20px; }
+
+.panel { display: none; animation: fadeIn 0.3s ease; }
+.panel.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+.section-title { font-family: 'Playfair Display', serif; font-size: 1.45rem; font-weight: 700; margin-bottom: 5px; }
+.section-sub { color: var(--muted); font-size: 0.87rem; margin-bottom: 26px; line-height: 1.5; }
+
+.card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; margin-bottom: 14px; }
+.card-title { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; }
+
+label { display: block; font-size: 0.82rem; color: var(--muted); margin-bottom: 5px; margin-top: 13px; }
+label:first-of-type { margin-top: 0; }
+
+input[type="text"], input[type="number"], select, textarea {
+  width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+  padding: 9px 13px; color: var(--text); font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.88rem; transition: border-color 0.2s; outline: none;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--accent2); }
+select option { background: var(--card); }
+textarea { resize: vertical; min-height: 76px; }
+.row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+/* CHIPS */
+.chips { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 9px; }
+.chip { padding: 5px 11px; border-radius: 18px; border: 1px solid var(--border); background: var(--card2); color: var(--muted); font-size: 0.79rem; cursor: pointer; transition: all 0.14s; user-select: none; }
+.chip.selected { background: rgba(232,184,75,0.14); border-color: var(--accent); color: var(--accent); }
+
+/* RANGE */
+.range-wrap { display: flex; align-items: center; gap: 13px; }
+.range-wrap input[type="range"] { flex: 1; accent-color: var(--accent); padding: 0; border: none; background: transparent; }
+.range-val { background: var(--card2); border: 1px solid var(--border); border-radius: 7px; padding: 3px 10px; min-width: 34px; text-align: center; font-size: 0.88rem; font-weight: 600; color: var(--accent); }
+
+/* UNTERRICHT ROWS */
+.unterricht-list { display: flex; flex-direction: column; gap: 8px; }
+
+.unterricht-row {
+  display: grid;
+  grid-template-columns: 2.2fr 1.6fr 0.7fr 34px;
+  gap: 7px; align-items: center;
+  background: var(--card2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 9px 11px; transition: border-color 0.2s;
+}
+.unterricht-row:hover { border-color: var(--accent2); }
+.unterricht-row select { margin: 0; }
+
+.std-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 32px; border-radius: 7px; padding: 0 10px;
+  font-size: 0.84rem; font-weight: 700; font-family: inherit;
+  background: rgba(232,184,75,0.12); border: 1px solid rgba(232,184,75,0.3);
+  color: var(--accent); white-space: nowrap;
+  transition: all 0.2s;
+}
+.std-badge.unbekannt {
+  background: var(--card); border-color: var(--border);
+  color: var(--muted); font-weight: 400; font-size: 0.75rem;
+}
+
+.header-row {
+  display: grid;
+  grid-template-columns: 2.2fr 1.6fr 0.7fr 34px;
+  gap: 7px; padding: 0 11px 5px;
+}
+.col-label { font-size: 0.68rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; text-align: center; }
+
+.btn-remove { width: 30px; height: 30px; background: transparent; border: 1px solid var(--danger); border-radius: 7px; color: var(--danger); cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; transition: all 0.14s; }
+.btn-remove:hover { background: var(--danger); color: white; }
+
+/* KURS HINWEIS */
+.kurs-hinweis {
+  background: rgba(232,184,75,0.07);
+  border: 1px solid rgba(232,184,75,0.25);
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+.kurs-hinweis strong { color: var(--accent); }
+
+/* ZEITRASTER */
+.einschraenkung-grid { display: grid; gap: 5px; }
+.day-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); text-align: center; padding-bottom: 3px; }
+.slot-btn { padding: 5px 3px; border-radius: 5px; border: 1px solid var(--border); background: var(--bg); color: var(--muted); font-size: 0.68rem; cursor: pointer; text-align: center; transition: all 0.14s; }
+.slot-btn.blocked { background: rgba(232,75,75,0.14); border-color: var(--danger); color: var(--danger); }
+.slot-btn.pref { background: rgba(75,123,232,0.14); border-color: var(--accent2); color: var(--accent2); }
+
+.legend { display: flex; gap: 14px; margin-top: 9px; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.74rem; color: var(--muted); }
+.legend-dot { width: 9px; height: 9px; border-radius: 3px; }
+
+/* SUMMARY */
+.summary-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; margin-top: 10px; }
+.summary-table th { text-align: left; padding: 7px 11px; color: var(--muted); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; border-bottom: 1px solid var(--border); font-weight: 600; }
+.summary-table td { padding: 9px 11px; border-bottom: 1px solid rgba(42,48,80,0.5); vertical-align: middle; }
+.summary-table tr:last-child td { border-bottom: none; }
+
+.tag { display: inline-block; padding: 2px 7px; border-radius: 5px; font-size: 0.7rem; font-weight: 600; background: rgba(75,123,232,0.14); color: var(--accent2); margin: 1px; }
+.tag.kl { background: rgba(232,184,75,0.14); color: var(--accent); }
+.tag.kurs { background: rgba(232,184,75,0.1); color: var(--accent); border: 1px solid rgba(232,184,75,0.3); }
+.stunden-badge { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 6px; background: var(--card2); border: 1px solid var(--border); font-size: 0.78rem; font-weight: 600; }
+
+/* BUTTONS */
+.btn { padding: 10px 20px; border-radius: 9px; font-family: 'Source Sans 3', sans-serif; font-size: 0.87rem; font-weight: 600; cursor: pointer; border: none; transition: all 0.18s; display: inline-flex; align-items: center; gap: 7px; }
+.btn-primary { background: var(--accent); color: #000; box-shadow: 0 4px 16px rgba(232,184,75,0.4); }
+.btn-primary:hover { background: #f0c85a; transform: translateY(-1px); }
+.btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
+.btn-secondary:hover { border-color: var(--accent2); color: var(--accent2); }
+.btn-ghost { background: var(--card2); border: 1px dashed var(--border); color: var(--muted); width: 100%; justify-content: center; padding: 9px; border-radius: 9px; font-size: 0.84rem; margin-top: 9px; }
+.btn-ghost:hover { border-color: var(--accent2); color: var(--accent2); }
+.btn-nav {
+  display: flex; gap: 11px; margin-top: 26px; justify-content: flex-end;
+  position: sticky; bottom: 16px; z-index: 50;
+}
+
+/* SUCCESS */
+.success-screen { text-align: center; padding: 56px 20px; }
+.success-icon { width: 76px; height: 76px; background: rgba(75,232,138,0.14); border: 2px solid var(--success); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 34px; margin: 0 auto 22px; animation: pulse 2s ease infinite; }
+@keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(75,232,138,0.3)} 50%{box-shadow:0 0 0 12px rgba(75,232,138,0)} }
+.success-screen h2 { font-family: 'Playfair Display', serif; font-size: 1.7rem; margin-bottom: 9px; color: var(--success); }
+.success-screen p { color: var(--muted); max-width: 380px; margin: 0 auto 26px; line-height: 1.6; font-size: 0.88rem; }
+
+.toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--card2); border: 1px solid var(--success); color: var(--success); padding: 11px 22px; border-radius: 10px; font-size: 0.84rem; font-weight: 600; z-index: 999; transition: transform 0.3s ease; }
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+@media (max-width: 600px) {
+  header { padding: 14px 16px; }
+  main { padding: 0 12px; }
+  .row-2 { grid-template-columns: 1fr; }
+  .unterricht-row { grid-template-columns: 1fr; gap: 5px; }
+  .header-row { display: none; }
+  .step span { display: none; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-icon">📋</div>
+  <div>
+    <h1>Stundenplan-Abfrage</h1>
+    <p>KHS St. Benedikt — Schuljahr 2026/27</p>
+  </div>
+  <div class="header-right">
+    <button class="btn btn-secondary" onclick="exportData()" style="font-size:0.78rem;padding:7px 13px;">⬇ Export</button>
+  </div>
+</header>
+
+<div class="progress-wrap">
+  <div class="progress-steps">
+    <div class="step active" onclick="goTo(1)" id="step1"><span class="step-num">1</span><span>Person</span></div>
+    <div class="step" onclick="goTo(2)" id="step2"><span class="step-num">2</span><span>Unterricht</span></div>
+    <div class="step" onclick="goTo(3)" id="step3"><span class="step-num">3</span><span>Zeiten</span></div>
+    <div class="step" onclick="goTo(4)" id="step4"><span class="step-num">4</span><span>Extras</span></div>
+    <div class="step" onclick="goTo(5)" id="step5"><span class="step-num">5</span><span>Übersicht</span></div>
+  </div>
+</div>
+
+<main>
+
+<!-- PANEL 1: PERSON -->
+<div class="panel active" id="panel1">
+  <div class="section-title">Angaben zur Person</div>
+  <div class="section-sub">Bitte füllen Sie alle Felder vollständig aus.</div>
+
+  <div class="card">
+    <div class="card-title">Stammdaten</div>
+    <div class="row-2">
+      <div><label>Vorname</label><input type="text" id="vorname" placeholder="z.B. Maria"></div>
+      <div><label>Nachname</label><input type="text" id="nachname" placeholder="z.B. Müller"></div>
+    </div>
+    <label>Kürzel</label>
+    <input type="text" id="kuerzel" placeholder="z.B. MUE" maxlength="4" style="text-transform:uppercase">
+  </div>
+
+  <div class="card">
+    <div class="card-title">Beschäftigung</div>
+    <label>Beschäftigungsumfang</label>
+    <div class="chips" id="chips-umfang">
+      <div class="chip selected" onclick="selectChip(this,'umfang');updateDeputat()">Vollzeit (28 Std.)</div>
+      <div class="chip" onclick="selectChip(this,'umfang');updateDeputat()">Teilzeit 75 % (21 Std.)</div>
+      <div class="chip" onclick="selectChip(this,'umfang');updateDeputat()">Teilzeit 50 % (14 Std.)</div>
+      <div class="chip" onclick="selectChip(this,'umfang');updateDeputat()">Abordnung</div>
+      <div class="chip" onclick="selectChip(this,'umfang');updateDeputat()">Sonstiges</div>
+    </div>
+    <label style="margin-top:16px;">Pflichtstunden (Deputat)</label>
+    <div class="range-wrap">
+      <input type="range" id="deputat" min="6" max="28" value="28" oninput="document.getElementById('deputat-val').textContent=this.value;updateDeputat()">
+      <div class="range-val" id="deputat-val">28</div>
+    </div>
+
+    <!-- ERMÄSSIGUNGEN direkt nach Deputat -->
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+      <div class="card-title">Ermäßigungsstunden</div>
+      <div style="display:grid;grid-template-columns:2.5fr 0.7fr 34px;gap:8px;padding:0 4px 6px;margin-bottom:4px;">
+        <div class="col-label" style="font-size:0.67rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;">Grund / Funktion</div>
+        <div class="col-label" style="font-size:0.67rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;text-align:center;">Std./Wo.</div>
+        <div></div>
+      </div>
+      <div id="ermae-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+      <button class="btn-ghost" onclick="addErmae()" style="margin-top:8px;">＋ Ermäßigung hinzufügen</button>
+      <div style="margin-top:10px;padding:10px 13px;background:rgba(75,123,232,0.07);border:1px solid rgba(75,123,232,0.2);border-radius:9px;font-size:0.79rem;color:var(--muted);line-height:1.6;">
+        <strong style="color:var(--accent2);">Typische Gründe:</strong>
+        Klassenleitung · Beratungslehrer:in · Schwerbehinderung · Altersermäßigung · Medienbeauftragte:r · Förderlehrer:in · Berufswegeplanung
+      </div>
+    </div>
+
+    <!-- DEPUTATS-ANZEIGE -->
+    <div id="deputat-status" style="margin-top:16px;padding:14px 16px;border-radius:10px;background:var(--card2);border:1px solid var(--border);display:none;">
+      <div style="font-size:0.7rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Deputatsübersicht</div>
+      <div style="display:flex;gap:0;height:10px;border-radius:5px;overflow:hidden;margin-bottom:10px;">
+        <div id="dep-bar-vergeben" style="background:var(--accent2);transition:width 0.4s;height:100%;"></div>
+        <div id="dep-bar-frei" style="background:var(--border);transition:width 0.4s;height:100%;flex:1;"></div>
+      </div>
+      <div style="display:flex;gap:18px;flex-wrap:wrap;font-size:0.82rem;">
+        <div><span style="color:var(--muted)">Deputat (45 Min.):</span> <strong id="dep-gesamt">28 Std.</strong></div>
+        <div><span style="color:var(--muted)">Ermäßigung:</span> <strong id="dep-ermae" style="color:var(--accent2)">0</strong></div>
+        <div><span style="color:var(--muted)">Netto (55 Min.)*:</span> <strong id="dep-netto">20.73 Std.</strong></div>
+      </div>
+      <div id="dep-hinweis" style="margin-top:8px;font-size:0.71rem;color:var(--muted);">
+        * Umgerechnet auf 55-Min.-Einheiten: Deputat × 45 ÷ 55
+      </div>
+    </div>
+
+    <label style="margin-top:16px;">Klassenleitung</label>
+    <div class="chips" id="chips-kl">
+      <div class="chip" onclick="selectChip(this,'kl')">5a</div>
+      <div class="chip" onclick="selectChip(this,'kl')">5b</div>
+      <div class="chip" onclick="selectChip(this,'kl')">6a</div>
+      <div class="chip" onclick="selectChip(this,'kl')">6b</div>
+      <div class="chip" onclick="selectChip(this,'kl')">7a</div>
+      <div class="chip" onclick="selectChip(this,'kl')">7b</div>
+      <div class="chip" onclick="selectChip(this,'kl')">7c</div>
+      <div class="chip" onclick="selectChip(this,'kl')">8a</div>
+      <div class="chip" onclick="selectChip(this,'kl')">8b</div>
+      <div class="chip" onclick="selectChip(this,'kl')">8c</div>
+      <div class="chip" onclick="selectChip(this,'kl')">9a</div>
+      <div class="chip" onclick="selectChip(this,'kl')">9b</div>
+      <div class="chip" onclick="selectChip(this,'kl')">9c</div>
+      <div class="chip" onclick="selectChip(this,'kl')">10A1</div>
+      <div class="chip" onclick="selectChip(this,'kl')">10A2</div>
+      <div class="chip" onclick="selectChip(this,'kl')">10B</div>
+      <div class="chip" onclick="selectChip(this,'kl')">Keine</div>
+    </div>
+  </div>
+
+  <div class="btn-nav">
+    <button class="btn btn-primary" onclick="goTo(2)">Weiter → Unterricht</button>
+  </div>
+</div>
+
+<!-- PANEL 2: UNTERRICHT -->
+<div class="panel" id="panel2">
+  <div class="section-title">Unterrichtswünsche</div>
+  <div class="section-sub">Tragen Sie Ihren Unterricht ein. <strong>Kl. 7–9:</strong> G-Kurse normal eintragen – E-Kurse werden im Dashboard separat zugewiesen.</div>
+
+  <!-- LIVE DEPUTATS-STREIFEN -->
+  <div id="dep-strip" style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+    <div style="flex:1;min-width:180px;">
+      <div style="font-size:0.68rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Noch zu vergeben</div>
+      <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;background:var(--border);">
+        <div id="strip-bar-vergeben" style="background:var(--accent2);transition:width 0.4s;height:100%;width:0%;"></div>
+        <div id="strip-bar-ueber" style="background:var(--danger);transition:width 0.4s;height:100%;width:0%;display:none;"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:16px;font-size:0.84rem;flex-shrink:0;flex-wrap:wrap;">
+      <div style="text-align:center;">
+        <div style="font-size:1.3rem;font-weight:700;font-family:'Playfair Display',serif;" id="strip-netto">28</div>
+        <div style="font-size:0.68rem;color:var(--muted);" id="strip-lbl-netto">Netto-Deputat*</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:1.3rem;font-weight:700;font-family:'Playfair Display',serif;color:var(--accent2);" id="strip-vergeben">0</div>
+        <div style="font-size:0.68rem;color:var(--muted);" id="strip-lbl-vergeben">Vergeben*</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:1.3rem;font-weight:700;font-family:'Playfair Display',serif;" id="strip-offen">28</div>
+        <div style="font-size:0.68rem;color:var(--muted);" id="strip-lbl-offen">Noch offen*</div>
+      </div>
+    </div>
+  </div>
+  <div id="dep-hinweis" style="display:none;font-size:0.72rem;color:var(--muted);margin-bottom:12px;padding:0 4px;">
+    * Umgerechnet auf 55-Min.-Einheiten (Faktor 45÷55). Deputat in 45-Min.-Stunden laut Erlass.
+  </div>
+
+  <div class="kurs-hinweis">
+    <strong>ℹ Hinweis Kurssystem Kl. 7–9:</strong> In den Jahrgängen 7–9 findet <strong>Englisch</strong> und <strong>Mathematik</strong> in Grund- und Erweiterungskursen statt. Bitte tragen Sie hier Ihren <strong>G-Kurs</strong> (Grundkurs) ein. E-Kurs-Wünsche können Sie unten im Freitextfeld vermerken – die Zuweisung erfolgt durch die Schulleitung im Dashboard.
+  </div>
+
+  <div class="card">
+    <div class="card-title">Fortführung bestehender Unterricht</div>
+    <div class="header-row">
+      <div class="col-label">Fach</div>
+      <div class="col-label">Klasse</div>
+      <div class="col-label">Std./Wo.</div>
+      <div></div>
+    </div>
+    <div class="unterricht-list" id="unterricht-fort"></div>
+    <button class="btn-ghost" onclick="addRow('fort')">＋ Weiteren Unterricht hinzufügen</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Neue Unterrichtswünsche</div>
+    <div class="header-row">
+      <div class="col-label">Fach</div>
+      <div class="col-label">Klasse</div>
+      <div class="col-label">Std./Wo.</div>
+      <div></div>
+    </div>
+    <div class="unterricht-list" id="unterricht-neu"></div>
+    <button class="btn-ghost" onclick="addRow('neu')">＋ Wunschunterricht hinzufügen</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">E-Kurs-Interesse (optional)</div>
+    <label>Möchten Sie einen E-Kurs in Englisch oder Mathematik (Kl. 7–9) unterrichten?</label>
+    <div class="chips" id="chips-ekurs">
+      <div class="chip" onclick="toggleChip(this)">E-Kurs Englisch Jg. 7</div>
+      <div class="chip" onclick="toggleChip(this)">E-Kurs Englisch Jg. 8</div>
+      <div class="chip" onclick="toggleChip(this)">E-Kurs Englisch Jg. 9</div>
+      <div class="chip" onclick="toggleChip(this)">E-Kurs Mathematik Jg. 7</div>
+      <div class="chip" onclick="toggleChip(this)">E-Kurs Mathematik Jg. 8</div>
+      <div class="chip" onclick="toggleChip(this)">E-Kurs Mathematik Jg. 9</div>
+      <div class="chip" onclick="toggleChip(this)">Kein Interesse an E-Kursen</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Wahlpflichtunterricht (WP)</div>
+    <label>Möchten Sie WP-Unterricht übernehmen?</label>
+    <div class="chips" id="chips-wp-ja" style="margin-bottom:12px;">
+      <div class="chip" onclick="selectChip(this,'wp-ja');toggleWP()">Ja</div>
+      <div class="chip selected" onclick="selectChip(this,'wp-ja');toggleWP()">Nein</div>
+    </div>
+
+    <div id="wp-details" style="display:none;">
+      <label>In welcher Jahrgangsstufe?</label>
+      <div class="chips" id="chips-wp-jg">
+        <div class="chip" onclick="toggleChip(this)">Jahrgang 7/8</div>
+        <div class="chip" onclick="toggleChip(this)">Jahrgang 9/10</div>
+      </div>
+      <label style="margin-top:12px;">Welches WP-Fach? (optional)</label>
+      <input type="text" id="wp-fach" placeholder="z.B. Arbeit-Technik, Arbeit-Hauswirtschaft, Darstellen & Gestalten…">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Fächer-Qualifikation</div>
+    <div class="chips" id="chips-faecher">
+      <div class="chip" onclick="toggleChip(this)">Deutsch (D)</div>
+      <div class="chip" onclick="toggleChip(this)">Englisch (E)</div>
+      <div class="chip" onclick="toggleChip(this)">Mathematik (M)</div>
+      <div class="chip" onclick="toggleChip(this)">Musik (Mu)</div>
+      <div class="chip" onclick="toggleChip(this)">Kunst (Ku)</div>
+      <div class="chip" onclick="toggleChip(this)">Erdkunde (EK)</div>
+      <div class="chip" onclick="toggleChip(this)">Geschichte/Politik (GP)</div>
+      <div class="chip" onclick="toggleChip(this)">Kath. Religion (KR)</div>
+      <div class="chip" onclick="toggleChip(this)">Biologie (Bio)</div>
+      <div class="chip" onclick="toggleChip(this)">Physik (Phy)</div>
+      <div class="chip" onclick="toggleChip(this)">Chemie (Ch)</div>
+      <div class="chip" onclick="toggleChip(this)">Informatik (IF)</div>
+      <div class="chip" onclick="toggleChip(this)">Sport (Sp)</div>
+      <div class="chip" onclick="toggleChip(this)">Schwimmen (Sw)</div>
+      <div class="chip" onclick="toggleChip(this)">Arbeit-Wirtschaft (AW)</div>
+      <div class="chip" onclick="toggleChip(this)">Arbeit-Technik (AT)</div>
+      <div class="chip" onclick="toggleChip(this)">Arbeit-Hauswirtschaft (AH)</div>
+      <div class="chip" onclick="toggleChip(this)">Vertiefung Deutsch (VD)</div>
+      <div class="chip" onclick="toggleChip(this)">Vertiefung Mathematik (VM)</div>
+      <div class="chip" onclick="toggleChip(this)">Soziales Lernen (Sol)</div>
+      <div class="chip" onclick="toggleChip(this)">Klassenlehrerstunde (KL)</div>
+    </div>
+  </div>
+
+  <div class="btn-nav">
+    <button class="btn btn-secondary" onclick="goTo(1)">← Zurück</button>
+    <button class="btn btn-primary" onclick="goTo(3)">Weiter → Zeiten</button>
+  </div>
+</div>
+
+<!-- PANEL 3: ZEITEN -->
+<div class="panel" id="panel3">
+  <div class="section-title">Verfügbarkeit</div>
+  <div class="section-sub">Markieren Sie Zeitslots: <span style="color:var(--danger)">nicht verfügbar</span> (1. Klick) oder <span style="color:var(--accent2)">bevorzugt</span> (2. Klick).</div>
+
+  <div class="card">
+    <div class="card-title">Wochenstundenraster</div>
+    <div id="zeitraster"></div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--bg);border:1px solid var(--border)"></div> Frei</div>
+      <div class="legend-item"><div class="legend-dot" style="background:rgba(232,75,75,0.2);border:1px solid var(--danger)"></div> Nicht verfügbar</div>
+      <div class="legend-item"><div class="legend-dot" style="background:rgba(75,123,232,0.2);border:1px solid var(--accent2)"></div> Bevorzugt</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Sonstige Einschränkungen</div>
+    <textarea id="einschraenkung-text" placeholder="z.B. Freitags ab 13 Uhr nicht verfügbar…"></textarea>
+  </div>
+
+  <div class="btn-nav">
+    <button class="btn btn-secondary" onclick="goTo(2)">← Zurück</button>
+    <button class="btn btn-primary" onclick="goTo(4)">Weiter → Extras</button>
+  </div>
+</div>
+
+<!-- PANEL 4: EXTRAS -->
+<div class="panel" id="panel4">
+  <div class="section-title">Anmerkungen</div>
+  <div class="section-sub">Sonstige Hinweise für die Stundenplanung.</div>
+
+  <div class="card">
+    <div class="card-title">Besondere Anmerkungen</div>
+    <textarea id="anmerkungen" placeholder="z.B. Kooperation mit Kolleg:in, Raumwünsche, geplante Elternzeit…"></textarea>
+  </div>
+
+  <div class="btn-nav">
+    <button class="btn btn-secondary" onclick="goTo(3)">← Zurück</button>
+    <button class="btn btn-primary" onclick="goTo(5)">Weiter → Übersicht</button>
+  </div>
+</div>
+
+<!-- PANEL 5: ÜBERSICHT -->
+<div class="panel" id="panel5">
+  <div class="section-title">Zusammenfassung</div>
+  <div class="section-sub">Bitte prüfen Sie Ihre Angaben vor dem Absenden.</div>
+  <div id="summary-content"></div>
+  <div id="url-fehler" style="display:none;margin-top:16px;padding:14px 18px;background:rgba(232,75,75,0.1);border:1px solid var(--danger);border-radius:10px;font-size:0.86rem;color:var(--danger);line-height:1.6;">
+    <strong>⚠ Keine Script-URL eingetragen!</strong><br>
+    <span style="color:var(--muted);font-size:0.82rem;">Bitte die URL im Code eintragen: <code>const APPS_SCRIPT_URL = 'deine-url';</code></span>
+  </div>
+  <div class="btn-nav" style="justify-content:space-between;flex-wrap:wrap;gap:10px;">
+    <button class="btn btn-secondary" onclick="goTo(4)">← Zurück</button>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-secondary" onclick="exportData()">⬇ JSON speichern</button>
+      <button class="btn btn-primary" onclick="submitForm()">✓ Abschicken</button>
+    </div>
+  </div>
+</div>
+
+<!-- SUCCESS -->
+<div class="panel" id="panel6">
+  <div class="success-screen">
+    <div class="success-icon">✓</div>
+    <h2>Vielen Dank!</h2>
+    <p>Ihre Angaben wurden übermittelt. Die Schulleitung erstellt auf Basis aller Rückmeldungen den Stundenplan.</p>
+    <button class="btn btn-secondary" onclick="location.reload()">Neue Eingabe</button>
+  </div>
+</div>
+
+</main>
+<!-- GRUND MODAL -->
+<div id="grund-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:400;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.4);">
+    <div style="font-family:'Playfair Display',serif;font-size:1.15rem;margin-bottom:4px;">Nicht verfügbar</div>
+    <div style="font-size:0.8rem;color:var(--muted);margin-bottom:16px;">
+      <span id="grund-modal-label"></span> – Warum bist du nicht verfügbar?
+    </div>
+    <input type="text" id="grund-input"
+      placeholder="z.B. Kita-Abholzeit, Therapie, Nebenjob, Arzttermin…"
+      style="width:100%;padding:10px 13px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:0.88rem;outline:none;margin-bottom:16px;"
+      onkeydown="if(event.key==='Enter') saveGrund()">
+    <div style="font-size:0.76rem;color:var(--muted);margin-bottom:16px;">Optional – du kannst das Feld auch leer lassen.</div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button onclick="closeGrundModal()" style="padding:9px 18px;background:transparent;border:1px solid var(--border);color:var(--text);border-radius:8px;font-family:inherit;font-size:0.84rem;cursor:pointer;">Abbrechen</button>
+      <button onclick="saveGrund()" style="padding:9px 18px;background:var(--danger);color:white;border:none;border-radius:8px;font-family:inherit;font-size:0.84rem;font-weight:600;cursor:pointer;">✕ Als gesperrt markieren</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── KONFIGURATION ──────────────────────────────────────────────
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz4TJRJV6QzRn6L8hpOIB366JIoMPS82s1Qmh0mZG0OaqfBFiePqE0J7ERNXbklV26iZA/exec'; // ← Web-App-URL hier eintragen
+
+const FAECHER = [
+  'Deutsch (D)','Englisch G-Kurs (EG)','Englisch E-Kurs (EE)',
+  'Mathematik G-Kurs (MG)','Mathematik E-Kurs (ME)',
+  'Englisch Kl. 5-6 (E)','Mathematik Kl. 5-6 (M)',
+  'Musik (Mu)','Kunst (Ku)','Erdkunde (EK)','Geschichte/Politik (GP)',
+  'Kath. Religion (KR)','Biologie (Bio)','Physik (Phy)','Chemie (Ch)',
+  'Informatik (IF)','Sport (Sp)','Schwimmen (Sw)',
+  'Arbeit-Wirtschaft (AW)','Arbeit-Technik (AT)','Arbeit-Hauswirtschaft (AH)',
+  'Vertiefung Deutsch (VD)','Vertiefung Mathematik (VM)',
+  'Soziales Lernen (Sol)','Klassenlehrerstunde (KL)','Sonstiges'
+];
+
+const KLASSEN = ['5a','5b','6a','6b','7a','7b','7c','8a','8b','8c','9a','9b','9c','10A1','10A2','10B'];
+const PRIO    = ['Hoch','Mittel','Niedrig'];
+const TAGE    = ['Mo','Di','Mi','Do','Fr'];
+const STUNDEN = ['1.','2.','3.','4.','5.','6.','7.','8.'];
+
+const state = { currentPanel: 1, zeitraster: {} };
+
+// ── NAVIGATION ─────────────────────────────────────────────────
+function goTo(n) {
+  if (n === 5) buildSummary();
+  if (n === 2) updateDeputat();
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel' + n).classList.add('active');
+  document.querySelectorAll('.step').forEach((s, i) => {
+    s.classList.remove('active','done');
+    if (i+1 === n) s.classList.add('active');
+    if (i+1 < n)  s.classList.add('done');
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── CHIPS ──────────────────────────────────────────────────────
+function selectChip(el, group) {
+  document.querySelectorAll(`#chips-${group} .chip`).forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function toggleChip(el) { el.classList.toggle('selected'); }
+
+function toggleWP() {
+  const ja = document.querySelector('#chips-wp-ja .chip.selected')?.textContent === 'Ja';
+  document.getElementById('wp-details').style.display = ja ? '' : 'none';
+}
+const STUNDENTAFEL_FORM = {
+  '5a':  {D:4,E:3,M:3,Mu:1,Ku:1,EK:1,GP:1,KR:1,Bio:1,IF:1,Sw:2,VD:2,VM:1,Sol:1,KL:1},
+  '5b':  {D:4,E:3,M:3,Mu:1,Ku:1,EK:1,GP:1,KR:1,Bio:1,IF:1,Sw:2,VD:2,VM:1,Sol:1,KL:1},
+  '6a':  {D:4,E:3,M:3,Mu:1,Ku:1,EK:1,GP:1,KR:1,Bio:1,IF:1,Phy:1,Sp:2,VD:1,VM:1,KL:1},
+  '6b':  {D:4,E:3,M:3,Mu:1,Ku:1,EK:1,GP:1,KR:1,Bio:1,IF:1,Phy:1,Sp:2,VD:1,VM:1,KL:1},
+  '7a':  {D:3,EG:3,MG:3,Ku:2,EK:2,GP:1,KR:1,Bio:2,Sp:2,VM:1,VD:1,KL:1},
+  '7b':  {D:3,EG:3,MG:3,Ku:2,EK:2,GP:1,KR:1,Bio:2,Sp:2,VM:1,VD:1,KL:1},
+  '7c':  {D:3,EG:3,MG:3,Ku:2,EK:2,GP:1,KR:1,Bio:2,Sp:2,VM:1,VD:1,KL:1},
+  '8a':  {D:3,EG:3,MG:3,Ku:1,EK:1,GP:1,KR:1,Bio:1,AW:1,Phy:1,Ch:1,Sp:1,AT:2,AH:2,VM:1,KL:1},
+  '8b':  {D:3,EG:3,MG:3,Ku:1,EK:1,GP:1,KR:1,Bio:1,AW:1,Phy:1,Ch:1,Sp:1,AT:2,AH:2,VM:1,KL:1},
+  '8c':  {D:3,EG:3,MG:3,Ku:1,EK:1,GP:1,KR:1,Bio:1,AW:1,Phy:1,Ch:1,Sp:1,AT:2,AH:2,VM:1,KL:1},
+  '9a':  {D:3,EG:3,MG:3,Ku:1,EK:1,GP:1,KR:1,Bio:1,Phy:1,Ch:1,AW:2,Sp:1,AT:2,AH:2,KL:1},
+  '9b':  {D:3,EG:3,MG:3,Ku:1,EK:1,GP:1,KR:1,Bio:1,Phy:1,Ch:1,AW:2,Sp:1,AT:2,AH:2,KL:1},
+  '9c':  {D:3,EG:3,MG:3,Ku:1,EK:1,GP:1,KR:1,Bio:1,Phy:1,Ch:1,AW:2,Sp:1,AT:2,AH:2,KL:1},
+  '10A1':{D:3,EG:3,EE:3,MG:3,ME:3,Ku:1,EK:1,GP:1,KR:1,Bio:1,Phy:1,Ch:1,AW:1,Sp:2,AT:2,AH:2,KL:1},
+  '10A2':{D:3,EG:3,EE:3,MG:3,ME:3,Ku:1,EK:1,GP:1,KR:1,Bio:1,Phy:1,Ch:1,AW:1,Sp:2,AT:2,AH:2,KL:1},
+  '10B': {D:3,EG:3,EE:3,MG:3,ME:3,Ku:1,EK:1,GP:1,KR:1,Bio:1,Phy:1,Ch:1,AW:1,EBE:1,Sp:2,AT:2,AH:2,KL:1},
+};
+
+// Fach-String → Kürzel extrahieren: "Deutsch (D)" → "D"
+function fachToAbbr(fachStr) {
+  const m = fachStr?.match(/\(([^)]+)\)/);
+  return m ? m[1] : null;
+}
+
+function lookupStunden(fachStr, klasse) {
+  const abbr = fachToAbbr(fachStr);
+  if (!abbr || !klasse) return null;
+  return STUNDENTAFEL_FORM[klasse]?.[abbr] ?? null;
+}
+
+// ── UNTERRICHT ROWS ────────────────────────────────────────────
+function makeSelect(arr, placeholder, cls) {
+  return `<select class="${cls}"><option value="">${placeholder}</option>` +
+    arr.map(a => `<option>${a}</option>`).join('') + '</select>';
+}
+
+function addRow(type, fach='', klasse='') {
+  const container = document.getElementById('unterricht-' + type);
+  const div = document.createElement('div');
+  div.className = 'unterricht-row';
+
+  const fachSel  = makeSelect(FAECHER, 'Fach…', 'sel-fach');
+  const klasseSel = makeSelect(KLASSEN, 'Klasse…', 'sel-klasse');
+
+  div.innerHTML =
+    fachSel + klasseSel +
+    `<div class="std-badge unbekannt" title="Stunden laut Stundentafel">— Std.</div>` +
+    `<button class="btn-remove" onclick="this.parentElement.remove()">×</button>`;
+
+  // Vorbelegen falls Werte übergeben
+  if (fach)   div.querySelector('.sel-fach').value   = fach;
+  if (klasse) div.querySelector('.sel-klasse').value = klasse;
+
+  // Auto-Lookup bei Änderung
+  const update = () => {
+    const f = div.querySelector('.sel-fach').value;
+    const k = div.querySelector('.sel-klasse').value;
+    const badge = div.querySelector('.std-badge');
+    const std = lookupStunden(f, k);
+    if (std !== null) {
+      badge.textContent = `${std} Std.`;
+      badge.classList.remove('unbekannt');
+    } else if (f && k) {
+      badge.textContent = '? Std.';
+      badge.classList.add('unbekannt');
+      badge.title = 'Dieses Fach ist laut Stundentafel nicht für diese Klasse vorgesehen';
+    } else {
+      badge.textContent = '— Std.';
+      badge.classList.add('unbekannt');
+      badge.title = 'Stunden laut Stundentafel';
+    }
+  };
+
+  div.querySelector('.sel-fach').addEventListener('change', () => { update(); updateDeputat(); });
+  div.querySelector('.sel-klasse').addEventListener('change', () => { update(); updateDeputat(); });
+  div.querySelector('.btn-remove').addEventListener('click', () => setTimeout(updateDeputat, 50));
+
+  // Initial befüllen
+  if (fach || klasse) update();
+
+  container.appendChild(div);
+}
+
+// ── ZEITRASTER ─────────────────────────────────────────────────
+function buildZeitraster() {
+  const wrap = document.getElementById('zeitraster');
+  let html = `<div class="einschraenkung-grid" style="grid-template-columns:46px repeat(5,1fr);margin-bottom:6px;">`;
+  html += '<div></div>';
+  TAGE.forEach(t => html += `<div class="day-label">${t}</div>`);
+  html += '</div>';
+  STUNDEN.forEach((s, si) => {
+    html += `<div class="einschraenkung-grid" style="grid-template-columns:46px repeat(5,1fr);margin-bottom:3px;">`;
+    html += `<div class="day-label" style="display:flex;align-items:center;justify-content:center;">${s}</div>`;
+    TAGE.forEach((t, ti) => {
+      const key = `${ti}-${si}`;
+      html += `<div class="slot-btn" id="slot-${key}" onclick="toggleSlot('${key}')">&nbsp;</div>`;
+    });
+    html += '</div>';
+  });
+  wrap.innerHTML = html;
+}
+
+function toggleSlot(key) {
+  const el  = document.getElementById('slot-' + key);
+  const cur = state.zeitraster[key]?.status || '';
+
+  if (!cur) {
+    // Grund abfragen
+    openGrundModal(key);
+  } else if (cur === 'blocked') {
+    // → bevorzugt
+    state.zeitraster[key] = { status: 'pref', grund: '' };
+    el.classList.remove('blocked'); el.classList.add('pref');
+    el.textContent = '★'; el.title = 'Bevorzugt';
+  } else {
+    // → frei
+    delete state.zeitraster[key];
+    el.classList.remove('pref','blocked');
+    el.textContent = '\u00a0'; el.title = '';
+  }
+}
+
+function openGrundModal(key) {
+  const tage    = ['Mo','Di','Mi','Do','Fr'];
+  const stunden = ['1.','2.','3.','4.','5.','6.','7.','8.'];
+  const [ti, si] = key.split('-').map(Number);
+  const label   = `${tage[ti]} ${stunden[si]} Stunde`;
+
+  document.getElementById('grund-modal-label').textContent = label;
+  document.getElementById('grund-input').value = state.zeitraster[key]?.grund || '';
+  document.getElementById('grund-modal').style.display = 'flex';
+  document.getElementById('grund-input').focus();
+  document.getElementById('grund-modal').dataset.key = key;
+}
+
+function saveGrund() {
+  const key   = document.getElementById('grund-modal').dataset.key;
+  const grund = document.getElementById('grund-input').value.trim();
+  const el    = document.getElementById('slot-' + key);
+
+  state.zeitraster[key] = { status: 'blocked', grund };
+  el.classList.add('blocked');
+  el.textContent = '✕';
+  el.title = grund ? `Nicht verfügbar: ${grund}` : 'Nicht verfügbar';
+
+  closeGrundModal();
+}
+
+function closeGrundModal() {
+  document.getElementById('grund-modal').style.display = 'none';
+}
+
+// ── SUMMARY ────────────────────────────────────────────────────
+function buildSummary() {
+  const name    = `${document.getElementById('vorname').value} ${document.getElementById('nachname').value}`.trim() || '(kein Name)';
+  const kuerzel = document.getElementById('kuerzel').value.toUpperCase() || '—';
+  const deputat = document.getElementById('deputat').value;
+  const umfang  = document.querySelector('#chips-umfang .chip.selected')?.textContent || '—';
+  const kl      = document.querySelector('#chips-kl .chip.selected')?.textContent || '—';
+
+  const collectRows = id => [...document.querySelectorAll(`#${id} .unterricht-row`)].map(row => {
+    const fach   = row.querySelector('.sel-fach')?.value || '—';
+    const klasse = row.querySelector('.sel-klasse')?.value || '—';
+    const std    = lookupStunden(fach, klasse) ?? '?';
+    return { fach, klasse, std };
+  });
+
+  const rowsF  = collectRows('unterricht-fort');
+  const rowsN  = collectRows('unterricht-neu');
+  const ekurs  = [...document.querySelectorAll('#chips-ekurs .chip.selected')].map(c=>c.textContent);
+  const faecher= [...document.querySelectorAll('#chips-faecher .chip.selected')].map(c=>c.textContent);
+  const ermae  = collectErmae();
+  const ermaeGesamt = ermae.reduce((s,e)=>s+(parseInt(e.stunden)||0),0);
+  const blockedEntries = Object.entries(state.zeitraster).filter(([,v])=>v?.status==='blocked');
+  const prefCount      = Object.values(state.zeitraster).filter(v=>v?.status==='pref').length;
+  const tageN = ['Mo','Di','Mi','Do','Fr'];
+  const stundenN = ['1.','2.','3.','4.','5.','6.','7.','8.'];
+
+  const blockedRows = blockedEntries.map(([key, val]) => {
+    const [ti,si] = key.split('-').map(Number);
+    return `<tr>
+      <td style="padding:6px 11px">${tageN[ti]} ${stundenN[si]} Stunde</td>
+      <td style="padding:6px 11px;color:var(--muted);font-size:0.82rem">${val.grund || '—'}</td>
+    </tr>`;
+  }).join('');
+
+  const renderRows = rows => rows.length === 0
+    ? '<tr><td colspan="3" style="color:var(--muted);font-style:italic">Keine Einträge</td></tr>'
+    : rows.map(r=>`<tr>
+        <td><span class="tag">${r.fach}</span></td>
+        <td>${r.klasse}</td>
+        <td><span class="stunden-badge">${r.std}</span></td>
+      </tr>`).join('');
+
+  document.getElementById('summary-content').innerHTML = `
+    <div class="card">
+      <div class="card-title">Person</div>
+      <table class="summary-table">
+        <tr><td style="color:var(--muted);width:150px">Name</td><td><strong>${name}</strong> (${kuerzel})</td></tr>
+        <tr><td style="color:var(--muted)">Beschäftigung</td><td>${umfang} · ${deputat} Std./Woche</td></tr>
+        <tr><td style="color:var(--muted)">Klassenleitung</td><td><span class="tag kl">${kl}</span></td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title">Fortführung</div>
+      <table class="summary-table"><thead><tr><th>Fach</th><th>Klasse</th><th>Std.</th></tr></thead>
+      <tbody>${renderRows(rowsF)}</tbody></table>
+    </div>
+    <div class="card">
+      <div class="card-title">Neue Wünsche</div>
+      <table class="summary-table"><thead><tr><th>Fach</th><th>Klasse</th><th>Std.</th></tr></thead>
+      <tbody>${renderRows(rowsN)}</tbody></table>
+    </div>
+    ${ekurs.length ? `<div class="card">
+      <div class="card-title">E-Kurs-Interesse</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
+        ${ekurs.map(e=>`<span class="tag kurs">${e}</span>`).join('')}
+      </div>
+    </div>` : ''}
+    ${(() => {
+      const wpJa = document.querySelector('#chips-wp-ja .chip.selected')?.textContent === 'Ja';
+      const wpJg = [...document.querySelectorAll('#chips-wp-jg .chip.selected')].map(c=>c.textContent);
+      const wpFach = document.getElementById('wp-fach')?.value?.trim();
+      if (!wpJa) return '';
+      return `<div class="card">
+        <div class="card-title">Wahlpflichtunterricht (WP)</div>
+        <table class="summary-table">
+          <tr><td style="color:var(--muted);width:150px">Interesse</td><td><span class="tag" style="background:rgba(75,232,138,0.1);color:var(--success)">Ja</span></td></tr>
+          <tr><td style="color:var(--muted)">Jahrgang</td><td>${wpJg.length ? wpJg.map(j=>`<span class="tag kl">${j}</span>`).join('') : '—'}</td></tr>
+          ${wpFach?`<tr><td style="color:var(--muted)">Fach</td><td>${wpFach}</td></tr>`:''}
+        </table>
+      </div>`;
+    })()}
+    <div class="card">
+      <div class="card-title">Qualifikationen</div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px">
+        ${faecher.length ? faecher.map(f=>`<span class="tag">${f}</span>`).join('') : '<span style="color:var(--muted);font-size:0.84rem">Keine ausgewählt</span>'}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Verfügbarkeit</div>
+      <table class="summary-table">
+        <tr><td style="color:var(--muted);width:200px">Gesperrte Slots</td><td>${blockedEntries.length}</td></tr>
+        <tr><td style="color:var(--muted)">Bevorzugte Slots</td><td>${prefCount}</td></tr>
+        <tr><td style="color:var(--muted)">Hinweise</td><td style="color:var(--muted);font-size:0.84rem">${document.getElementById('einschraenkung-text').value||'—'}</td></tr>
+      </table>
+      ${blockedEntries.length ? `
+        <div style="margin-top:12px;font-size:0.7rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Gesperrte Zeiten &amp; Gründe</div>
+        <table class="summary-table">
+          <thead><tr><th>Zeit</th><th>Grund</th></tr></thead>
+          <tbody>${blockedRows}</tbody>
+        </table>` : ''}
+    </div>
+    ${ermae.length ? `<div class="card">
+      <div class="card-title">Ermäßigungsstunden — gesamt: ${ermaeGesamt} Std./Wo.</div>
+      <table class="summary-table">
+        <thead><tr><th>Grund / Funktion</th><th style="text-align:center">Std./Wo.</th></tr></thead>
+        <tbody>
+          ${ermae.map(e=>`<tr>
+            <td>${e.grund||'—'}</td>
+            <td style="text-align:center"><span class="stunden-badge">${e.stunden||0}</span></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>` : ''}
+    ${document.getElementById('anmerkungen').value ? `<div class="card">
+      <div class="card-title">Anmerkungen</div>
+      <div style="font-size:0.84rem;color:var(--muted)">${document.getElementById('anmerkungen').value}</div>
+    </div>` : ''}
+  `;
+}
+
+// ── EXPORT / SUBMIT ────────────────────────────────────────────
+function collectData() {
+  const collectRows = id => [...document.querySelectorAll(`#${id} .unterricht-row`)].map(row => {
+    const fach   = row.querySelector('.sel-fach')?.value;
+    const klasse = row.querySelector('.sel-klasse')?.value;
+    return { fach, klasse, stunden: lookupStunden(fach, klasse) ?? '?' };
+  });
+  return {
+    meta: { schule:'KHS St. Benedikt', schuljahr:'2026/27', erstellt: new Date().toISOString() },
+    person: {
+      vorname:  document.getElementById('vorname').value,
+      nachname: document.getElementById('nachname').value,
+      kuerzel:  document.getElementById('kuerzel').value.toUpperCase(),
+      deputat:  document.getElementById('deputat').value,
+      umfang:   document.querySelector('#chips-umfang .chip.selected')?.textContent,
+      klassenleitung: document.querySelector('#chips-kl .chip.selected')?.textContent,
+    },
+    unterricht: {
+      fortfuehrung:  collectRows('unterricht-fort'),
+      neu:           collectRows('unterricht-neu'),
+      ekursInteresse: [...document.querySelectorAll('#chips-ekurs .chip.selected')].map(c=>c.textContent),
+      qualifikationen:[...document.querySelectorAll('#chips-faecher .chip.selected')].map(c=>c.textContent),
+      wp: {
+        interesse: document.querySelector('#chips-wp-ja .chip.selected')?.textContent === 'Ja',
+        jahrgaenge: [...document.querySelectorAll('#chips-wp-jg .chip.selected')].map(c=>c.textContent),
+        fach: document.getElementById('wp-fach')?.value?.trim() || '',
+      },
+    },
+    zeiten: {
+      raster: state.zeitraster,
+      einschraenkungen: document.getElementById('einschraenkung-text').value,
+    },
+    extras: {
+      ermaessigungen: collectErmae(),
+      anmerkungen: document.getElementById('anmerkungen').value,
+    }
+  };
+}
+
+function exportData() {
+  const data = collectData();
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `stundenplan_${data.person.nachname||'Lehrkraft'}_2026-27.json`;
+  a.click();
+  showToast('Exportiert!');
+}
+
+async function submitForm() {
+  if (!APPS_SCRIPT_URL) {
+    document.getElementById('url-fehler').style.display = '';
+    return;
+  }
+  document.getElementById('url-fehler').style.display = 'none';
+
+  const data = collectData();
+  try {
+    showToast('Wird gesendet…');
+    // Google Apps Script benötigt no-cors + FormData
+    const form = new FormData();
+    form.append('data', JSON.stringify(data));
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',   // ← wichtig für Google Apps Script
+      body: JSON.stringify(data),
+    });
+    // no-cors gibt immer "opaque" zurück – wir gehen von Erfolg aus
+    showToast('✓ Erfolgreich abgeschickt!');
+    setTimeout(() => {
+      document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+      document.getElementById('panel6').classList.add('active');
+    }, 800);
+  } catch(e) {
+    showToast('⚠ Fehler: ' + e.message);
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2400);
+}
+
+// ── ERMÄSSIGUNGEN ──────────────────────────────────────────────
+function addErmae(grund='', stunden='') {
+  const list = document.getElementById('ermae-list');
+  const div = document.createElement('div');
+  div.style.cssText = 'display:grid;grid-template-columns:2.5fr 0.7fr 34px;gap:8px;align-items:center;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:9px 11px;';
+  div.innerHTML = `
+    <input type="text" placeholder="z.B. Klassenleitung, Beratungslehrer:in, Altersermäßigung…"
+      class="ermae-grund" value="${grund}"
+      style="margin:0;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:8px 11px;color:var(--text);font-family:inherit;font-size:0.87rem;outline:none;">
+    <input type="number" min="0.5" max="8" step="0.5" placeholder="Std." value="${stunden}"
+      class="ermae-std"
+      style="margin:0;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:8px 8px;color:var(--text);font-family:inherit;font-size:0.87rem;outline:none;text-align:center;">
+    <button class="btn-remove" onclick="this.parentElement.remove();updateDeputat()">×</button>`;
+  div.querySelector('.ermae-std').addEventListener('input', updateDeputat);
+  list.appendChild(div);
+  updateDeputat();
+}
+
+function collectErmae() {
+  return [...document.querySelectorAll('#ermae-list > div')].map(row => ({
+    grund:   row.querySelector('.ermae-grund')?.value?.trim() || '',
+    stunden: parseFloat(row.querySelector('.ermae-std')?.value) || 0,
+  })).filter(e => e.grund || e.stunden);
+}
+
+// ── DEPUTAT LIVE-ANZEIGE (55-Min-Umrechnung) ──────────────────
+const FAKTOR = 45 / 55; // 45-Min-Stunden → 55-Min-Stunden
+
+function umrechnen(std45) {
+  return (std45 * FAKTOR).toFixed(2);
+}
+
+function updateDeputat() {
+  const deputat45 = parseInt(document.getElementById('deputat').value) || 28;
+  const ermae45   = collectErmae().reduce((s,e) => s + (e.stunden||0), 0);
+  const netto45   = Math.max(0, deputat45 - ermae45);
+
+  // Umgerechnete Werte (55 Min.)
+  const deputat55 = umrechnen(deputat45);
+  const ermae55   = umrechnen(ermae45);
+  const netto55   = umrechnen(netto45);
+
+  // Alle vergebenen Stunden (aus Stundentafel, in 45-Min-Einheiten)
+  const vergeben45 = [...document.querySelectorAll('#unterricht-fort .unterricht-row, #unterricht-neu .unterricht-row')]
+    .reduce((s, row) => {
+      const f = row.querySelector('.sel-fach')?.value;
+      const k = row.querySelector('.sel-klasse')?.value;
+      return s + (lookupStunden(f, k) || 0);
+    }, 0);
+
+  const vergeben55 = umrechnen(vergeben45);
+  const offen55    = Math.max(0, netto45 - vergeben45);
+  const offen55str = umrechnen(offen55);
+  const pct        = netto45 > 0 ? Math.min(100, Math.round(vergeben45 / netto45 * 100)) : 0;
+  const ueber      = vergeben45 > netto45;
+
+  // ── Panel 1: Deputats-Status-Box ──
+  const statusBox = document.getElementById('deputat-status');
+  if (statusBox) {
+    statusBox.style.display = '';
+    document.getElementById('dep-gesamt').textContent = `${deputat45} Std. = ${deputat55} Std.*`;
+    document.getElementById('dep-ermae').textContent  = ermae45 > 0 ? `${ermae45} Std. = ${ermae55} Std.*` : '0';
+    document.getElementById('dep-netto').textContent  = `${netto55} Std.*`;
+    document.getElementById('dep-bar-vergeben').style.width = pct + '%';
+    statusBox.style.borderColor = ueber ? 'var(--danger)' : vergeben45 > 0 ? 'rgba(75,232,138,0.3)' : 'var(--border)';
+  }
+
+  // Hinweis-Text einblenden
+  const hinweis = document.getElementById('dep-hinweis');
+  if (hinweis) hinweis.style.display = '';
+
+  // ── Panel 2: Streifen oben ──
+  const stripNetto    = document.getElementById('strip-netto');
+  const stripVergeben = document.getElementById('strip-vergeben');
+  const stripOffen    = document.getElementById('strip-offen');
+  const stripBar      = document.getElementById('strip-bar-vergeben');
+  const stripBarUeber = document.getElementById('strip-bar-ueber');
+
+  if (stripNetto) {
+    stripNetto.textContent    = netto55;
+    stripVergeben.textContent = vergeben55;
+    stripOffen.textContent    = offen55str;
+    stripOffen.style.color    = ueber ? 'var(--danger)' : offen55 === 0 ? 'var(--success)' : 'var(--text)';
+
+    if (ueber) {
+      stripBar.style.width        = '100%';
+      stripBar.style.background   = 'var(--danger)';
+      stripBarUeber.style.display = '';
+    } else {
+      stripBar.style.width        = pct + '%';
+      stripBar.style.background   = pct === 100 ? 'var(--success)' : 'var(--accent2)';
+      stripBarUeber.style.display = 'none';
+    }
+
+    const strip = document.getElementById('dep-strip');
+    if (strip) {
+      strip.style.borderColor = ueber
+        ? 'var(--danger)'
+        : pct === 100 ? 'rgba(75,232,138,0.4)' : 'var(--border)';
+    }
+
+    // Beschriftungen anpassen
+    const lblNetto    = document.getElementById('strip-lbl-netto');
+    const lblVergeben = document.getElementById('strip-lbl-vergeben');
+    const lblOffen    = document.getElementById('strip-lbl-offen');
+    if (lblNetto)    lblNetto.textContent    = 'Netto-Deputat*';
+    if (lblVergeben) lblVergeben.textContent = 'Vergeben*';
+    if (lblOffen)    lblOffen.textContent    = 'Noch offen*';
+  }
+}
+
+// ── INIT ───────────────────────────────────────────────────────
+addRow('fort'); addRow('fort'); addRow('neu');
+buildZeitraster();
+updateDeputat();
+</script>
+</body>
+</html>
