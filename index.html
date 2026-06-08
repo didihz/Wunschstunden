@@ -335,7 +335,7 @@ textarea { resize: vertical; min-height: 76px; }
   </div>
 
   <div class="kurs-hinweis">
-    <strong>ℹ Hinweis Kurssystem Kl. 7–9:</strong> In den Jahrgängen 7–9 findet <strong>Englisch</strong> und <strong>Mathematik</strong> in Grund- und Erweiterungskursen statt. Bitte tragen Sie hier Ihren <strong>G-Kurs</strong> (Grundkurs) ein. E-Kurs-Wünsche können Sie unten im Freitextfeld vermerken – die Zuweisung erfolgt durch die Schulleitung im Dashboard.
+    <strong>ℹ Hinweis Kurssystem Kl. 7–9:</strong> In den Jahrgängen 7–9 findet <strong>Englisch</strong> und <strong>Mathematik</strong> in Grund- und Erweiterungskursen statt. Bitte tragen Sie Ihren <strong>G-Kurs</strong> (EG/MG) <em>oder</em> <strong>E-Kurs</strong> (EE/ME) mit der zugehörigen Klasse ein. Der E-Kurs wird jahrgangsübergreifend aus allen drei Klassen zusammengestellt – bitte die Klasse eintragen, in der Sie den Kurs unterrichten.
   </div>
 
   <div class="card">
@@ -364,14 +364,29 @@ textarea { resize: vertical; min-height: 76px; }
 
   <div class="card">
     <div class="card-title">E-Kurs-Interesse (optional)</div>
+    <div style="margin-bottom:10px;padding:10px 13px;background:rgba(75,123,232,0.07);border:1px solid rgba(75,123,232,0.2);border-radius:9px;font-size:0.79rem;color:var(--muted);line-height:1.6;">
+      <strong style="color:var(--accent2);">Hinweis:</strong> Der E-Kurs in Englisch und Mathematik wird jahrgangsübergreifend aus allen drei Klassen (a/b/c) zusammengestellt. Den E-Kurs bitte auch als Unterrichtseintrag mit der entsprechenden Klasse eintragen (z.B. <em>Englisch E-Kurs</em> + <em>7a</em>).
+    </div>
     <label>Möchten Sie einen E-Kurs in Englisch oder Mathematik (Kl. 7–9) unterrichten?</label>
     <div class="chips" id="chips-ekurs">
-      <div class="chip" onclick="toggleChip(this)">E-Kurs Englisch Jg. 7</div>
-      <div class="chip" onclick="toggleChip(this)">E-Kurs Englisch Jg. 8</div>
-      <div class="chip" onclick="toggleChip(this)">E-Kurs Englisch Jg. 9</div>
-      <div class="chip" onclick="toggleChip(this)">E-Kurs Mathematik Jg. 7</div>
-      <div class="chip" onclick="toggleChip(this)">E-Kurs Mathematik Jg. 8</div>
-      <div class="chip" onclick="toggleChip(this)">E-Kurs Mathematik Jg. 9</div>
+      <div class="chip" onclick="toggleChip(this)">E-Kurs Englisch 7a</div>
+      <div class="chip" onclick="toggleChip(this)">E-Kurs Englisch 7b</div>
+      <div class="chip" onclick="toggleChip(this)">E-Kurs Englisch 7c</div>
+      <div class="chip" onclick="toggleChip(this)">E-Kurs Englisch 8a</div>
+      <div class="chip" onclick="toggleChip(this)">E-Kurs Englisch 8b</div>
+      <div class="chip" onclick="toggleChip(this)">E-Kurs Englisch 8c</div>
+      <div class="chip" onclick="toggleChip(this)">E-Kurs Englisch 9a</div>
+      <div class="chip" onclick="toggleChip(this)">E-Kurs Englisch 9b</div>
+      <div class="chip" onclick="toggleChip(this)">E-Kurs Englisch 9c</div>
+      <div class="chip" onclick="toggleChip(this)">E-Kurs Mathematik 7a</div>
+      <div class="chip" onclick="toggleChip(this)">E-Kurs Mathematik 7b</div>
+      <div class="chip" onclick="toggleChip(this)">E-Kurs Mathematik 7c</div>
+      <div class="chip" onclick="toggleChip(this)">E-Kurs Mathematik 8a</div>
+      <div class="chip" onclick="toggleChip(this)">E-Kurs Mathematik 8b</div>
+      <div class="chip" onclick="toggleChip(this)">E-Kurs Mathematik 8c</div>
+      <div class="chip" onclick="toggleChip(this)">E-Kurs Mathematik 9a</div>
+      <div class="chip" onclick="toggleChip(this)">E-Kurs Mathematik 9b</div>
+      <div class="chip" onclick="toggleChip(this)">E-Kurs Mathematik 9c</div>
       <div class="chip" onclick="toggleChip(this)">Kein Interesse an E-Kursen</div>
     </div>
   </div>
@@ -477,7 +492,7 @@ textarea { resize: vertical; min-height: 76px; }
   <div id="summary-content"></div>
   <div id="url-fehler" style="display:none;margin-top:16px;padding:14px 18px;background:rgba(232,75,75,0.1);border:1px solid var(--danger);border-radius:10px;font-size:0.86rem;color:var(--danger);line-height:1.6;">
     <strong>⚠ Keine Script-URL eingetragen!</strong><br>
-    <span style="color:var(--muted);font-size:0.82rem;">Bitte die URL im Code eintragen: <code>const APPS_SCRIPT_URL = 'deine-url';</code></span>
+    <span style="color:var(--muted);font-size:0.82rem;">Bitte die URL im Code eintragen: <code>const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz4TJRJV6QzRn6L8hpOIB366JIoMPS82s1Qmh0mZG0OaqfBFiePqE0J7ERNXbklV26iZA/exec';</code></span>
   </div>
   <div class="btn-nav" style="justify-content:space-between;flex-wrap:wrap;gap:10px;">
     <button class="btn btn-secondary" onclick="goTo(4)">← Zurück</button>
@@ -522,7 +537,7 @@ textarea { resize: vertical; min-height: 76px; }
 
 <script>
 // ── KONFIGURATION ──────────────────────────────────────────────
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz4TJRJV6QzRn6L8hpOIB366JIoMPS82s1Qmh0mZG0OaqfBFiePqE0J7ERNXbklV26iZA/exec'; // ← Web-App-URL hier eintragen
+const APPS_SCRIPT_URL = ''; // ← Web-App-URL hier eintragen
 
 const FAECHER = [
   'Deutsch (D)','Englisch G-Kurs (EG)','Englisch E-Kurs (EE)',
@@ -536,7 +551,7 @@ const FAECHER = [
   'Soziales Lernen (Sol)','Klassenlehrerstunde (KL)','Sonstiges'
 ];
 
-const KLASSEN = ['5a','5b','6a','6b','7a','7b','7c','8a','8b','8c','9a','9b','9c','10A1','10A2','10B'];
+const KLASSEN = ['5a','5b','6a','6b','7a','7b','7c','7a/b/c','8a','8b','8c','8a/b/c','9a','9b','9c','9a/b/c','10A1','10A2','10B'];
 const PRIO    = ['Hoch','Mittel','Niedrig'];
 const TAGE    = ['Mo','Di','Mi','Do','Fr'];
 const STUNDEN = ['1.','2.','3.','4.','5.','6.','7.','8.'];
@@ -573,15 +588,18 @@ const STUNDENTAFEL_FORM = {
   '5b':  {D:4,E:3,M:3,Mu:1,Ku:1,EK:1,GP:1,KR:1,Bio:1,IF:1,Sw:2,VD:2,VM:1,Sol:1,KL:1},
   '6a':  {D:4,E:3,M:3,Mu:1,Ku:1,EK:1,GP:1,KR:1,Bio:1,IF:1,Phy:1,Sp:2,VD:1,VM:1,KL:1},
   '6b':  {D:4,E:3,M:3,Mu:1,Ku:1,EK:1,GP:1,KR:1,Bio:1,IF:1,Phy:1,Sp:2,VD:1,VM:1,KL:1},
-  '7a':  {D:3,EG:3,MG:3,Ku:2,EK:2,GP:1,KR:1,Bio:2,Sp:2,VM:1,VD:1,KL:1},
-  '7b':  {D:3,EG:3,MG:3,Ku:2,EK:2,GP:1,KR:1,Bio:2,Sp:2,VM:1,VD:1,KL:1},
-  '7c':  {D:3,EG:3,MG:3,Ku:2,EK:2,GP:1,KR:1,Bio:2,Sp:2,VM:1,VD:1,KL:1},
-  '8a':  {D:3,EG:3,MG:3,Ku:1,EK:1,GP:1,KR:1,Bio:1,AW:1,Phy:1,Ch:1,Sp:1,AT:2,AH:2,VM:1,KL:1},
-  '8b':  {D:3,EG:3,MG:3,Ku:1,EK:1,GP:1,KR:1,Bio:1,AW:1,Phy:1,Ch:1,Sp:1,AT:2,AH:2,VM:1,KL:1},
-  '8c':  {D:3,EG:3,MG:3,Ku:1,EK:1,GP:1,KR:1,Bio:1,AW:1,Phy:1,Ch:1,Sp:1,AT:2,AH:2,VM:1,KL:1},
-  '9a':  {D:3,EG:3,MG:3,Ku:1,EK:1,GP:1,KR:1,Bio:1,Phy:1,Ch:1,AW:2,Sp:1,AT:2,AH:2,KL:1},
-  '9b':  {D:3,EG:3,MG:3,Ku:1,EK:1,GP:1,KR:1,Bio:1,Phy:1,Ch:1,AW:2,Sp:1,AT:2,AH:2,KL:1},
-  '9c':  {D:3,EG:3,MG:3,Ku:1,EK:1,GP:1,KR:1,Bio:1,Phy:1,Ch:1,AW:2,Sp:1,AT:2,AH:2,KL:1},
+  '7a':  {D:3,EG:3,EE:3,MG:3,ME:3,Ku:2,EK:2,GP:1,KR:1,Bio:2,Sp:2,VM:1,VD:1,KL:1},
+  '7b':  {D:3,EG:3,EE:3,MG:3,ME:3,Ku:2,EK:2,GP:1,KR:1,Bio:2,Sp:2,VM:1,VD:1,KL:1},
+  '7c':  {D:3,EG:3,EE:3,MG:3,ME:3,Ku:2,EK:2,GP:1,KR:1,Bio:2,Sp:2,VM:1,VD:1,KL:1},
+  '7a/b/c': {EE:3,ME:3},
+  '8a':  {D:3,EG:3,EE:3,MG:3,ME:3,Ku:1,EK:1,GP:1,KR:1,Bio:1,AW:1,Phy:1,Ch:1,Sp:1,AT:2,AH:2,VM:1,KL:1},
+  '8b':  {D:3,EG:3,EE:3,MG:3,ME:3,Ku:1,EK:1,GP:1,KR:1,Bio:1,AW:1,Phy:1,Ch:1,Sp:1,AT:2,AH:2,VM:1,KL:1},
+  '8c':  {D:3,EG:3,EE:3,MG:3,ME:3,Ku:1,EK:1,GP:1,KR:1,Bio:1,AW:1,Phy:1,Ch:1,Sp:1,AT:2,AH:2,VM:1,KL:1},
+  '8a/b/c': {EE:3,ME:3},
+  '9a':  {D:3,EG:3,EE:3,MG:3,ME:3,Ku:1,EK:1,GP:1,KR:1,Bio:1,Phy:1,Ch:1,AW:2,Sp:1,AT:2,AH:2,KL:1},
+  '9b':  {D:3,EG:3,EE:3,MG:3,ME:3,Ku:1,EK:1,GP:1,KR:1,Bio:1,Phy:1,Ch:1,AW:2,Sp:1,AT:2,AH:2,KL:1},
+  '9c':  {D:3,EG:3,EE:3,MG:3,ME:3,Ku:1,EK:1,GP:1,KR:1,Bio:1,Phy:1,Ch:1,AW:2,Sp:1,AT:2,AH:2,KL:1},
+  '9a/b/c': {EE:3,ME:3},
   '10A1':{D:3,EG:3,EE:3,MG:3,ME:3,Ku:1,EK:1,GP:1,KR:1,Bio:1,Phy:1,Ch:1,AW:1,Sp:2,AT:2,AH:2,KL:1},
   '10A2':{D:3,EG:3,EE:3,MG:3,ME:3,Ku:1,EK:1,GP:1,KR:1,Bio:1,Phy:1,Ch:1,AW:1,Sp:2,AT:2,AH:2,KL:1},
   '10B': {D:3,EG:3,EE:3,MG:3,ME:3,Ku:1,EK:1,GP:1,KR:1,Bio:1,Phy:1,Ch:1,AW:1,EBE:1,Sp:2,AT:2,AH:2,KL:1},
