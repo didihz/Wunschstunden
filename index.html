@@ -537,7 +537,7 @@ textarea { resize: vertical; min-height: 76px; }
 
 <script>
 // ── KONFIGURATION ──────────────────────────────────────────────
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxRgmY754qFkh7WW6GErsCDLrRWuPlilZFeG4eXTjBPyPXViozYMwphLfbOfPL24hsoZw/exec'; // ← Web-App-URL hier eintragen
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwGUZUYKSetc_VJs3gh85auZqQqSOj813u95xI-RagCU6nh_HPeJkUkko6Ym0-SCV_aVA/exec'; // ← Web-App-URL hier eintragen
 
 const FAECHER = [
   'Deutsch (D)','Englisch G-Kurs (EG)','Englisch E-Kurs (EE)',
@@ -614,7 +614,16 @@ function fachToAbbr(fachStr) {
 function lookupStunden(fachStr, klasse) {
   const abbr = fachToAbbr(fachStr);
   if (!abbr || !klasse) return null;
-  return STUNDENTAFEL_FORM[klasse]?.[abbr] ?? null;
+  // Direkte Suche
+  if (STUNDENTAFEL_FORM[klasse]?.[abbr] !== undefined)
+    return STUNDENTAFEL_FORM[klasse][abbr];
+  // Normalisiert suchen (Leerzeichen entfernen)
+  const kNorm = klasse.replace(/\s/g,'');
+  for (const key of Object.keys(STUNDENTAFEL_FORM)) {
+    if (key.replace(/\s/g,'') === kNorm && STUNDENTAFEL_FORM[key][abbr] !== undefined)
+      return STUNDENTAFEL_FORM[key][abbr];
+  }
+  return null;
 }
 
 // ── UNTERRICHT ROWS ────────────────────────────────────────────
@@ -1061,3 +1070,4 @@ updateDeputat();
 </script>
 </body>
 </html>
+
